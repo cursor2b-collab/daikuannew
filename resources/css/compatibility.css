@@ -1,0 +1,180 @@
+/* 兼容性增强CSS - 支持旧版本浏览器 */
+
+/* 重置和基础样式 */
+* {
+    box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    color: #333;
+    background-color: #f5f5f5;
+}
+
+/* Flexbox兼容性 - 降级到float布局 */
+.flex-container {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: flex;
+}
+
+.flex-item {
+    -webkit-box-flex: 1;
+    -webkit-flex: 1;
+    -moz-box-flex: 1;
+    -ms-flex: 1;
+    flex: 1;
+}
+
+/* 对于不支持flexbox的浏览器，使用float布局 */
+.no-flexbox .flex-container {
+    display: block;
+    overflow: hidden;
+}
+
+.no-flexbox .flex-item {
+    float: left;
+    width: 50%;
+}
+
+.no-flexbox .flex-item:after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+/* Transform兼容性 */
+.transform-element {
+    -webkit-transform: translateY(-1px);
+    -moz-transform: translateY(-1px);
+    -ms-transform: translateY(-1px);
+    -o-transform: translateY(-1px);
+    transform: translateY(-1px);
+}
+
+/* Transition兼容性 */
+.transition-element {
+    -webkit-transition: all 0.3s ease;
+    -moz-transition: all 0.3s ease;
+    -ms-transition: all 0.3s ease;
+    -o-transition: all 0.3s ease;
+    transition: all 0.3s ease;
+}
+
+/* Box-shadow兼容性 */
+.shadow-element {
+    -webkit-box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    -moz-box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Border-radius兼容性 */
+.rounded-element {
+    -webkit-border-radius: 8px;
+    -moz-border-radius: 8px;
+    border-radius: 8px;
+}
+
+/* Linear-gradient兼容性 */
+.gradient-element {
+    background: #ff6b6b; /* 降级颜色 */
+    background: -webkit-linear-gradient(135deg, #ff6b6b, #ff5252);
+    background: -moz-linear-gradient(135deg, #ff6b6b, #ff5252);
+    background: -ms-linear-gradient(135deg, #ff6b6b, #ff5252);
+    background: -o-linear-gradient(135deg, #ff6b6b, #ff5252);
+    background: linear-gradient(135deg, #ff6b6b, #ff5252);
+}
+
+/* 移动端适配 */
+@media screen and (max-width: 768px) {
+    body {
+        font-size: 14px;
+    }
+    
+    .mobile-padding {
+        padding: 10px;
+    }
+    
+    .mobile-button {
+        padding: 12px 20px;
+        font-size: 16px;
+        min-height: 44px; /* iOS推荐的最小触摸目标 */
+    }
+}
+
+/* iOS Safari特殊处理 */
+@supports (-webkit-touch-callout: none) {
+    .ios-input {
+        -webkit-appearance: none;
+        border-radius: 0;
+    }
+    
+    .ios-button {
+        -webkit-appearance: none;
+        border-radius: 0;
+    }
+}
+
+/* Android WebView特殊处理 */
+.android-webview {
+    -webkit-overflow-scrolling: touch;
+}
+
+/* 触摸优化 */
+.touch-element {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* 滚动优化 */
+.scroll-container {
+    -webkit-overflow-scrolling: touch;
+    overflow-scrolling: touch;
+}
+
+/* 输入框优化 */
+input, textarea {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    border-radius: 0;
+}
+
+/* 按钮优化 */
+button {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    border: none;
+    background: none;
+    cursor: pointer;
+}
+
+/* 防止缩放 */
+.no-zoom {
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+/* 隐藏滚动条但保持滚动功能 */
+.hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}

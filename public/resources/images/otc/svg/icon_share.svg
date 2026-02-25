@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="30px" height="30px" viewBox="0 0 30 30" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>按钮样式/分享</title>
+    <g id="主页面" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="4.0.3-合约K线-分享K线" transform="translate(-92.000000, -738.000000)">
+            <g id="fenxiang" transform="translate(92.000000, 738.000000)">
+                <rect id="矩形" fill="#000000" fill-rule="nonzero" opacity="0" x="0" y="0" width="30" height="30"></rect>
+                <g id="编组-23" transform="translate(4.239130, 4.239130)" stroke="#86BB00" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                    <path d="M10.7608696,0 C4.81780541,0 0,4.81780541 0,10.7608696 C0,16.7039337 4.81780541,21.5217391 10.7608696,21.5217391 C16.7039337,21.5217391 21.5217391,16.7039337 21.5217391,10.7608696" id="路径"></path>
+                    <path d="M9.7826087,13.6956522 L9.7826087,8.32956522 C9.7826087,6.97094473 10.8839882,5.86956522 12.2426087,5.86956522 L17.6086957,5.86956522 L17.6086957,5.86956522" id="路径-10"></path>
+                    <polyline id="路径-11" transform="translate(16.869183, 5.847790) rotate(-10.000000) translate(-16.869183, -5.847790) " points="14.997727 1.76130377 18.7406381 6.08560482 14.997727 9.93427687"></polyline>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

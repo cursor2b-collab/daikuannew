@@ -1,0 +1,29 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+
+export default function ChatlinkPage() {
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const loadCustomerServiceUrl = async () => {
+      try {
+        const response = await fetch('/api/get_customer_service_url')
+        const result = await response.json()
+        const url = result.code === 200 && result.data?.url ? result.data.url : 'https://kefu-seven.vercel.app/'
+        window.location.href = url
+      } catch (error) {
+        window.location.href = 'https://kefu-seven.vercel.app/'
+      }
+    }
+
+    loadCustomerServiceUrl()
+  }, [])
+
+  return (
+    <div className="main-content loaded" style={{ padding: '20px', textAlign: 'center' }}>
+      <p>正在跳转到借款咨询页面...</p>
+    </div>
+  )
+}
+

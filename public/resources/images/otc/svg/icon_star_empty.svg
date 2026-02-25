@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="18px" height="18px" viewBox="0 0 18 18" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>星星满</title>
+    <g id="主页面" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="2-行情-未选择自选" transform="translate(-156.000000, -391.000000)" fill-rule="nonzero">
+            <g id="编组-2" transform="translate(16.000000, 362.000000)">
+                <g id="星星满" transform="translate(140.000000, 30.000000)">
+                    <rect id="矩形" fill="#FAFAFA" opacity="0" x="0" y="0" width="17" height="17"></rect>
+                    <path d="M8.94072003,13.995307 C3.97929077,17.4872351 2.37433026,16.2530441 4.12545141,10.2919922 C-0.599366014,6.46148418 0.0327762991,4.49111738 6.02189447,4.38252083 C8.06246592,-1.47778937 10.058844,-1.4604507 12.0089643,4.43248847 C17.9943889,4.64184286 18.5968378,6.62335481 13.8137626,10.3741533 C15.470739,16.3628826 13.8463915,17.5710414 8.94072003,13.995307 Z" id="路径" stroke="#929AA5"></path>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

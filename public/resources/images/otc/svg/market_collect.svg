@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="24px" height="24px" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>编组</title>
+    <defs>
+        <linearGradient x1="50%" y1="0%" x2="50%" y2="100%" id="linearGradient-1">
+            <stop stop-color="#FF9600" offset="0%"></stop>
+            <stop stop-color="#FFCE29" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="主页面" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="4-超级合约K线详情备份" transform="translate(-19.000000, -1308.000000)" fill-rule="nonzero">
+            <g id="编组-23" transform="translate(0.000000, 1288.000000)">
+                <g id="编组-2" transform="translate(16.000000, 17.000000)">
+                    <g id="编组" transform="translate(3.000000, 3.000000)">
+                        <rect id="矩形" fill="#000000" opacity="0" x="0" y="0" width="24" height="24"></rect>
+                        <g id="收藏-选中" transform="translate(1.000000, 1.000000)">
+                            <rect id="矩形" fill="#000000" opacity="0" x="0" y="0" width="21" height="21"></rect>
+                            <g id="星星满">
+                                <rect id="矩形" fill="#000000" opacity="0" x="0" y="0" width="21" height="21"></rect>
+                                <path d="M10.437756,16.7950723 C5.22825531,20.4615968 3.54304678,19.1656964 5.38172398,12.9065918 C0.420665686,8.88455839 1.08441511,6.81567324 7.3729892,6.70164687 C9.51558922,0.548321158 11.6117862,0.566526765 13.6594125,6.75411289 C19.9441084,6.97393501 20.5766797,9.05452255 15.5544507,12.992861 C17.2942759,19.2810268 15.588711,20.5495934 10.437756,16.7950723 Z" id="路径" fill="url(#linearGradient-1)"></path>
+                            </g>
+                        </g>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="23px" height="24px" viewBox="0 0 23 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>编组</title>
+    <g id="主页面" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="4.0.1-合约K线-最新成交" transform="translate(-20.000000, -1308.000000)" fill-rule="nonzero">
+            <g id="编组-23" transform="translate(0.000000, 1288.000000)">
+                <g id="编组-2" transform="translate(17.000000, 17.000000)">
+                    <g id="编组" transform="translate(3.000000, 3.000000)">
+                        <rect id="矩形" fill="#FAFAFA" opacity="0" x="0" y="0" width="23" height="24"></rect>
+                        <g id="星星满" transform="translate(1.000000, 1.000000)">
+                            <rect id="矩形" fill="#FAFAFA" opacity="0" x="0" y="0" width="20" height="20"></rect>
+                            <path d="M10.94072,15.995307 C5.97929077,19.4872351 4.37433026,18.2530441 6.12545141,12.2919922 C1.40063399,8.46148418 2.0327763,6.49111738 8.02189447,6.38252083 C10.0624659,0.522210627 12.058844,0.5395493 14.0089643,6.43248847 C19.9943889,6.64184286 20.5968378,8.62335481 15.8137626,12.3741533 C17.470739,18.3628826 15.8463915,19.5710414 10.94072,15.995307 Z" id="路径" fill="#E6E6E6"></path>
+                        </g>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>
