@@ -64,7 +64,23 @@ CAPTCHA_SECRET=
 
 ---
 
-## 四、常用操作
+## 四、静态资源（如图片）不显示时
+
+部署到 Netlify 后若首页吉祥物等图片 404、不显示，常见原因：
+
+1. **未提交到 Git**：`public/` 下的文件不会自动打包进构建，Netlify 是按 Git 仓库内容构建的。请确认已提交并推送：
+   ```bash
+   git add public/resources/images/strip.png
+   git status   # 确认无遗漏
+   git commit -m "chore: add hero mascot image"
+   git push
+   ```
+2. **重新部署**：推送后在 Netlify 的 Deploys 里触发一次 **Clear cache and deploy site**，再访问页面查看图片是否正常。
+3. **路径**：代码中已使用「当前站点完整地址 + /resources/images/strip.png」，避免相对路径在部分环境下解析错误。
+
+---
+
+## 五、常用操作
 
 - **重新部署**：Deploys → **Trigger deploy** → **Deploy site**
 - **查看构建日志**：Deploys → 某次部署 → **Build log**

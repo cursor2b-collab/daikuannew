@@ -7,6 +7,12 @@ import { loadPageData, checkLoginStatus, syncLoginWithServer } from '@/lib/api'
 import FooterNav from '@/components/FooterNav'
 import LoadingOverlay from '@/components/LoadingOverlay'
 
+// 吉祥物图片：使用完整路径避免 Netlify 等部署环境下静态资源 404（需确保 public/resources/images/strip.png 已提交到 Git）
+function getMascotSrc(): string {
+  if (typeof window !== 'undefined') return `${window.location.origin}/resources/images/strip.png`
+  return '/resources/images/strip.png'
+}
+
 interface PageData {
   title?: string
   page_title?: string
@@ -95,9 +101,9 @@ export default function HomePage() {
         <div className="hero-card">
           <div className="hero-card-inner">
             <div className="hero-card-mascot">
-              <img src="/resources/images/strip.png" alt="" role="presentation" className="hero-mascot-img" onError={(e) => { const el = e.target as HTMLImageElement; el.style.display = 'none'; el.nextElementSibling?.classList.add('show'); }} />
+              <img src={getMascotSrc()} alt="" role="presentation" className="hero-mascot-img" onError={(e) => { const el = e.target as HTMLImageElement; el.style.display = 'none'; el.nextElementSibling?.classList.add('show'); }} />
               <div className="hero-mascot-placeholder" aria-hidden>
-                <img src="/resources/images/strip.png" alt="" role="presentation" />
+                <img src={getMascotSrc()} alt="" role="presentation" />
               </div>
             </div>
             <div className="hero-card-content">
