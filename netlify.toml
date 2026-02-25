@@ -1,0 +1,22 @@
+# Netlify 部署配置 - daikuannew (Next.js 14)
+# 文档: https://docs.netlify.com/build/frameworks/framework-setup-guides/nextjs/
+# Next.js 由 Netlify 自动识别并启用 OpenNext，无需配置 publish 目录。
+
+[build]
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "18"
+  NPM_FLAGS = "--legacy-peer-deps"
+
+# 可选：重定向与头信息（按需取消注释）
+# [[redirects]]
+#   from = "/*"
+#   to = "/index.html"
+#   status = 200
+#   force = true
+# [[headers]]
+#   for = "/*"
+#   [headers.values]
+#     X-Frame-Options = "DENY"
+#     X-Content-Type-Options = "nosniff"
