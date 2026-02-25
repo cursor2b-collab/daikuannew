@@ -30,8 +30,8 @@ export default function FooterNav() {
 
   const navItems: NavItem[] = [
     { path: '/', icon: 'layui-icon-home', label: '首页' },
-    { path: customerServiceUrl, icon: 'layui-icon-dialogue', label: '借款咨询', external: true },
-    { path: '/repayment', icon: 'layui-icon-rmb', label: '欠款' },
+    { path: customerServiceUrl, icon: 'layui-icon-dialogue', label: '客服', external: true },
+    { path: '/repayment', icon: 'layui-icon-rmb', label: '还款' },
     { path: '/profile', icon: 'layui-icon-username', label: '我的' },
   ]
 

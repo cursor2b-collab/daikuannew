@@ -92,7 +92,13 @@ export default function LoginPage() {
     try {
       const result = await sendVerificationCode(phone, captchaToken, captchaValue.trim())
       if (result.code === 200) {
-        alert('验证码发送成功')
+        const backendCode = result.data?.code
+        if (backendCode) {
+          setCode(backendCode)
+          alert('验证码已生成，已自动填入，请点击「立即登录」')
+        } else {
+          alert('验证码发送成功')
+        }
         loadCaptcha()
         setCountdown(60)
         const timer = setInterval(() => {

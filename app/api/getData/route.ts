@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
       menu1_text: '申请服务',
       menu2_text: '我的服务',
       menu3_text: '我的欠款',
-      menu4_text: '借款咨询',
+      menu4_text: '在线客服',
       menu5_text: '我的资料',
       menu6_text: '个人中心',
       impact_title: '逾期影响',

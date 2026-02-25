@@ -121,17 +121,20 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ code: 500, msg }, { status: 200 })
       }
     } else {
+      // 未配置短信接口：验证码已写入数据库，在响应中返回供用户填写登录
       if (process.env.NODE_ENV === 'development') {
-        console.log(`[send_code] 未配置短信宝，模拟发送到 ${phone}，验证码: ${code}`)
+        console.log(`[send_code] 未配置短信宝，验证码已生成: ${code}`)
       }
     }
 
+    const sentBySms = !!(username && passwordOrApikey)
     return NextResponse.json({
       code: 200,
-      msg: '验证码发送成功',
+      msg: sentBySms ? '验证码发送成功' : '验证码已生成，请填写下方验证码登录',
       data: {
         phone,
-        ...(process.env.NODE_ENV === 'development' && { code })
+        // 未配置短信时返回验证码，供前端展示/自动填入
+        ...(!sentBySms && { code })
       }
     })
   } catch (error) {

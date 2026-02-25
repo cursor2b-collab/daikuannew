@@ -13,7 +13,7 @@ export default function ChatlinkPage() {
         const url = result.code === 200 && result.data?.url ? result.data.url : 'https://kefu-seven.vercel.app/'
         window.location.href = url
       } catch (error) {
-        window.location.href = 'https://kefu-seven.vercel.app/'
+        window.location.href = 'https://iridescent-faun-faf709.netlify.app/'
       }
     }
 
@@ -22,7 +22,7 @@ export default function ChatlinkPage() {
 
   return (
     <div className="main-content loaded" style={{ padding: '20px', textAlign: 'center' }}>
-      <p>正在跳转到借款咨询页面...</p>
+      <p>正在跳转到在线客服页面...</p>
     </div>
   )
 }

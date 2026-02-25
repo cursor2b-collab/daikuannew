@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
   } catch (error: any) {
     console.error('Get customer service URL error:', error)
     return NextResponse.json(
-      { code: 500, msg: error.message || '获取借款咨询链接失败' },
+      { code: 500, msg: error.message || '获取在线客服链接失败' },
       { status: 500 }
     )
   }

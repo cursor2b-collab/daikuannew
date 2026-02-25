@@ -34,35 +34,23 @@
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase 项目 URL | `https://xxxxx.supabase.co` |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` | Supabase 匿名公钥（anon key） | `eyJhbGciOiJIUzI1NiIsInR5cCI6...` |
 
-### 可选（按功能启用）
+### 可选（仅在 Netlify 配置）
 
 | 变量名 | 说明 | 示例值 |
 |--------|------|--------|
 | `CAPTCHA_SECRET` | 图形验证码签发/校验密钥，生产环境务必设置 | 随机长字符串（如 32 位） |
-| `TELEGRAM_BOT_TOKEN` | Telegram 机器人 Token（登录通知） | 从 @BotFather 获取 |
-| `TELEGRAM_CHAT_ID` | Telegram 群组 Chat ID（接收通知） | 如 `-1001234567890` |
-| `SMSBAO_USERNAME` | 短信宝用户名 | 短信宝账号 |
-| `SMSBAO_PASSWORD` | 短信宝密码或 32 位 ApiKey（推荐 ApiKey） | 密码或 ApiKey |
-| `SMSBAO_GOODS_ID` | 短信宝专用通道产品 ID | 数字 ID（可选） |
-| `SMSBAO_CONTENT_TEMPLATE` | 短信内容模板，`{code}` 表示验证码 | `您的验证码是：{code}，5分钟内有效。`（可选） |
 
 **说明：**
 
-- 短信、Telegram、图形验证码等也可在**管理后台「系统设置」**中配置；环境变量与后台同时存在时，部分接口会优先使用环境变量。
-- 未配置短信/Telegram 时，对应功能不启用或走模拟/默认行为。
+- **Telegram（登录通知）**、**短信宝（验证码）**、**短信模板** 等均在 **管理后台「系统设置」** 中配置，无需在 Netlify 环境变量里填写。
+- 部署完成后登录管理后台，在「系统设置」相应标签页中设置即可。
 
-### 复制用（一次性粘贴到本地再逐项填到 Netlify）
+### 复制用（Netlify 环境变量）
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=
 CAPTCHA_SECRET=
-TELEGRAM_BOT_TOKEN=
-TELEGRAM_CHAT_ID=
-SMSBAO_USERNAME=
-SMSBAO_PASSWORD=
-SMSBAO_GOODS_ID=
-SMSBAO_CONTENT_TEMPLATE=
 ```
 
 ---

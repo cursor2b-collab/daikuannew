@@ -382,7 +382,7 @@ export default function SettingsPage() {
             <div style={{ display: 'grid', gap: '20px' }}>
               <div>
                 <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>
-                  借款咨询链接
+                  在线客服链接
                 </label>
                 <input
                   type="text"
