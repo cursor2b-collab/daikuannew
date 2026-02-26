@@ -57,16 +57,24 @@ export default function HomePage() {
       })
     }
 
-    // 加载页面数据
-    loadPageData('index')
-      .then((data) => {
-        setPageData(data)
-        setLoading(false)
-      })
-      .catch((error) => {
-        console.error('加载数据失败:', error)
-        setLoading(false)
-      })
+    // 加载页面数据（首次 + 从后台/其他标签切回来时重新拉取，保证文案是最新的）
+    const fetchData = () => {
+      loadPageData('index')
+        .then((data) => {
+          setPageData(data)
+          setLoading(false)
+        })
+        .catch((error) => {
+          console.error('加载数据失败:', error)
+          setLoading(false)
+        })
+    }
+    fetchData()
+    const onVisible = () => { fetchData() }
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', onVisible)
+      return () => document.removeEventListener('visibilitychange', onVisible)
+    }
   }, [router])
 
   useEffect(() => {

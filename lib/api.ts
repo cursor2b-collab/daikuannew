@@ -116,13 +116,17 @@ export async function syncLoginWithServer(clearLocalOnServerLogout: boolean = tr
  * 加载页面数据
  */
 export async function loadPageData(page: string, phone?: string): Promise<any> {
-  let url = `/api/getData?page=${page}`
+  let url = `/api/getData?page=${encodeURIComponent(page)}`
   if (phone) {
     url += `&phone=${encodeURIComponent(phone)}`
   }
-  
+  url += `&_=${Date.now()}`
   try {
-    const response = await fetch(url)
+    const response = await fetch(url, {
+      cache: 'no-store',
+      credentials: 'same-origin',
+      headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+    })
     const data = await response.json()
     return data
   } catch (error) {

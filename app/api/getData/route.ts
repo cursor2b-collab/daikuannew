@@ -150,29 +150,38 @@ export async function GET(request: NextRequest) {
   if (page === 'index') {
     try {
       const copy = await getCopySettings()
-      if (copy.copy_index_page_title !== undefined) data = { ...data, page_title: copy.copy_index_page_title, title: copy.copy_index_page_title }
-      if (copy.copy_index_subtitle !== undefined) data = { ...data, subtitle: copy.copy_index_subtitle }
-      if (copy.copy_hero_product_name !== undefined) data = { ...data, hero_product_name: copy.copy_hero_product_name }
-      if (copy.copy_hero_quota_label !== undefined) data = { ...data, hero_quota_label: copy.copy_hero_quota_label }
-      if (copy.copy_hero_amount !== undefined) data = { ...data, hero_amount: copy.copy_hero_amount }
-      if (copy.copy_hero_rate !== undefined) data = { ...data, hero_rate: copy.copy_hero_rate }
-      if (copy.copy_hero_tip !== undefined) data = { ...data, hero_tip: copy.copy_hero_tip }
-      if (copy.copy_product_title !== undefined) data = { ...data, product_title: copy.copy_product_title }
-      if (copy.copy_rate_info !== undefined) data = { ...data, rate_info: copy.copy_rate_info }
-      if (copy.copy_max_amount !== undefined) data = { ...data, max_amount: copy.copy_max_amount }
-      if (copy.copy_payment_method !== undefined) data = { ...data, payment_method: copy.copy_payment_method }
-      if (copy.copy_process_method !== undefined) data = { ...data, process_method: copy.copy_process_method }
-      if (copy.copy_step1_text !== undefined) data = { ...data, step1_text: copy.copy_step1_text }
-      if (copy.copy_step2_text !== undefined) data = { ...data, step2_text: copy.copy_step2_text }
-      if (copy.copy_step3_text !== undefined) data = { ...data, step3_text: copy.copy_step3_text }
-      if (copy.copy_marquee_messages !== undefined) {
+      if (copy.copy_index_page_title !== undefined && copy.copy_index_page_title !== null) {
+        data = { ...data, page_title: String(copy.copy_index_page_title), title: String(copy.copy_index_page_title) }
+      }
+      if (copy.copy_index_subtitle !== undefined && copy.copy_index_subtitle !== null) data = { ...data, subtitle: String(copy.copy_index_subtitle) }
+      if (copy.copy_hero_product_name !== undefined && copy.copy_hero_product_name !== null) data = { ...data, hero_product_name: String(copy.copy_hero_product_name) }
+      if (copy.copy_hero_quota_label !== undefined && copy.copy_hero_quota_label !== null) data = { ...data, hero_quota_label: String(copy.copy_hero_quota_label) }
+      if (copy.copy_hero_amount !== undefined && copy.copy_hero_amount !== null) data = { ...data, hero_amount: String(copy.copy_hero_amount) }
+      if (copy.copy_hero_rate !== undefined && copy.copy_hero_rate !== null) data = { ...data, hero_rate: String(copy.copy_hero_rate) }
+      if (copy.copy_hero_tip !== undefined && copy.copy_hero_tip !== null) data = { ...data, hero_tip: String(copy.copy_hero_tip) }
+      if (copy.copy_product_title !== undefined && copy.copy_product_title !== null) data = { ...data, product_title: String(copy.copy_product_title) }
+      if (copy.copy_rate_info !== undefined && copy.copy_rate_info !== null) data = { ...data, rate_info: String(copy.copy_rate_info) }
+      if (copy.copy_max_amount !== undefined && copy.copy_max_amount !== null) data = { ...data, max_amount: String(copy.copy_max_amount) }
+      if (copy.copy_payment_method !== undefined && copy.copy_payment_method !== null) data = { ...data, payment_method: String(copy.copy_payment_method) }
+      if (copy.copy_process_method !== undefined && copy.copy_process_method !== null) data = { ...data, process_method: String(copy.copy_process_method) }
+      if (copy.copy_step1_text !== undefined && copy.copy_step1_text !== null) data = { ...data, step1_text: String(copy.copy_step1_text) }
+      if (copy.copy_step2_text !== undefined && copy.copy_step2_text !== null) data = { ...data, step2_text: String(copy.copy_step2_text) }
+      if (copy.copy_step3_text !== undefined && copy.copy_step3_text !== null) data = { ...data, step3_text: String(copy.copy_step3_text) }
+      if (copy.copy_marquee_messages !== undefined && copy.copy_marquee_messages !== null) {
         try {
-          const arr = JSON.parse(copy.copy_marquee_messages)
+          const arr = JSON.parse(String(copy.copy_marquee_messages))
           if (Array.isArray(arr)) data = { ...data, marquee_messages: arr }
         } catch (_) {}
       }
-    } catch (_) {}
+    } catch (e) {
+      console.error('[getData] index copy merge error:', e)
+    }
   }
 
-  return NextResponse.json(data)
+  return NextResponse.json(data, {
+    headers: {
+      'Cache-Control': 'no-store, no-cache, must-revalidate',
+      'Pragma': 'no-cache'
+    }
+  })
 }
