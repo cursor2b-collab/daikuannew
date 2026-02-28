@@ -10,7 +10,7 @@ export async function GET() {
       .select('setting_value')
       .eq('setting_key', 'site_name')
       .maybeSingle()
-    const siteName = data?.setting_value != null ? String(data.setting_value) : '好享贷'
+    const siteName = data?.setting_value != null ? String(data.setting_value) : '分期付'
     return NextResponse.json({
       code: 200,
       data: { site_name: siteName }
@@ -18,7 +18,7 @@ export async function GET() {
   } catch {
     return NextResponse.json({
       code: 200,
-      data: { site_name: '好享贷' }
+      data: { site_name: '分期付' }
     })
   }
 }

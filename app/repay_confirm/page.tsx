@@ -1,18 +1,24 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { checkLoginStatus, getCurrentUser } from '@/lib/api'
 import FooterNav from '@/components/FooterNav'
 
 export default function RepayConfirmPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const periodFromUrl = searchParams.get('period')
+  const amountFromUrl = searchParams.get('amount')
   const [userInfo, setUserInfo] = useState<any>(null)
   const [loanData, setLoanData] = useState<any>(null)
   const [paymentMethods, setPaymentMethods] = useState<any[]>([])
   const [selectedCard, setSelectedCard] = useState('银行卡一')
   const [showDropdown, setShowDropdown] = useState(false)
   const [loading, setLoading] = useState(true)
+
+  const isPeriodRepay = periodFromUrl && amountFromUrl
+  const displayAmount = isPeriodRepay ? amountFromUrl : (loanData?.totalRepayment || '0.00')
 
   useEffect(() => {
     if (!checkLoginStatus(true)) {
@@ -26,12 +32,12 @@ export default function RepayConfirmPage() {
   const loadUserData = async () => {
     try {
       const user = getCurrentUser()
-      if (!user || !user.phone) {
+      const userId = (user as any)?.id ?? (user as any)?.user_id
+      if (!user?.phone && !userId) {
         return
       }
-
-      // 获取用户数据
-      const response = await fetch(`/api/get_user_data?phone=${encodeURIComponent(user.phone)}`)
+      const query = userId ? `userId=${userId}` : `phone=${encodeURIComponent(user!.phone)}`
+      const response = await fetch(`/api/get_user_data?${query}`, { cache: 'no-store' })
       const result = await response.json()
 
       if (result.code === 200 && result.data) {
@@ -152,6 +158,12 @@ export default function RepayConfirmPage() {
         {/* Confirm Repayment Information Section */}
         <div className="repay-confirm-card">
           <h2 className="repay-confirm-section-title">确认还款信息</h2>
+          {isPeriodRepay && (
+            <div className="repay-confirm-info-item" style={{ marginBottom: '8px' }}>
+              <span className="repay-confirm-label">还款期数:</span>
+              <span className="repay-confirm-value">第{periodFromUrl}期</span>
+            </div>
+          )}
           <div className="repay-confirm-info-item">
             <span className="repay-confirm-label">贷款编号:</span>
             <span className="repay-confirm-value">{loanData?.loan_number || '-'}</span>
@@ -161,8 +173,10 @@ export default function RepayConfirmPage() {
             <span className="repay-confirm-value">¥{loanData?.loanAmount || '0.00'}</span>
           </div>
           <div className="repay-confirm-info-item repay-confirm-total">
-            <span className="repay-confirm-label" style={{ color: '#dc2626' }}>总还款金额:</span>
-            <span className="repay-confirm-value" style={{ color: '#dc2626' }}>¥{loanData?.totalRepayment || '0.00'}</span>
+            <span className="repay-confirm-label" style={{ color: '#dc2626' }}>
+              {isPeriodRepay ? '本期还款金额:' : '总还款金额:'}
+            </span>
+            <span className="repay-confirm-value" style={{ color: '#dc2626' }}>¥{displayAmount}</span>
           </div>
         </div>
 
@@ -255,7 +269,7 @@ export default function RepayConfirmPage() {
             <circle cx="10" cy="9" r="1" fill="white"/>
             <circle cx="13" cy="9" r="1" fill="white"/>
           </svg>
-          <span>联系借款顾问</span>
+          <span>联系在线客服</span>
         </button>
       </div>
 

@@ -12,7 +12,7 @@ export default function LoginPage() {
   const [countdown, setCountdown] = useState(0)
   const [loading, setLoading] = useState(false)
   const [pageData, setPageData] = useState<any>({})
-  const [appTitle, setAppTitle] = useState('好享贷')
+  const [appTitle, setAppTitle] = useState('分期付')
   const [captchaToken, setCaptchaToken] = useState('')
   const [captchaSvg, setCaptchaSvg] = useState('')
   const [captchaValue, setCaptchaValue] = useState('')
@@ -44,11 +44,11 @@ export default function LoginPage() {
       .then(res => res.json())
       .then(data => {
         if (data && data.code === 200 && data.data) {
-          setAppTitle(data.data.site_name || '好享贷')
+          setAppTitle(data.data.site_name || '分期付')
         }
       })
       .catch(() => {
-        setAppTitle('好享贷')
+        setAppTitle('分期付')
       })
   }, [router])
 

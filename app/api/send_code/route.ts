@@ -5,6 +5,7 @@ import { verifyCaptcha } from '@/lib/captcha'
 
 export const dynamic = 'force-dynamic'
 
+// 短信宝发送接口：https://api.smsbao.com/sms?u={用户名}&p={密码或ApiKey}&m={手机号}&c={内容URL编码}
 const SMS_BAO_SEND_URL = 'https://api.smsbao.com/sms'
 
 const DEFAULT_SMS_TEMPLATE = '【短信宝】您的验证码是{code}，5分钟内有效。'

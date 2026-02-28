@@ -10,7 +10,12 @@ interface PaymentMethod {
 }
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState<'basic' | 'payment' | 'telegram' | 'sms' | 'copy'>('basic')
+  const [activeTab, setActiveTab] = useState<'basic' | 'payment' | 'telegram' | 'sms' | 'copy' | 'dedup'>('basic')
+  const [dedupStats, setDedupStats] = useState<{
+    users: { total: number; duplicatePhones: number; duplicateCount: number }
+    verification_codes: { total: number; duplicateCount: number }
+  } | null>(null)
+  const [dedupLoading, setDedupLoading] = useState(false)
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([])
   const [customerServiceUrl, setCustomerServiceUrl] = useState('https://kefu-seven.vercel.app/')
   const [telegramBotToken, setTelegramBotToken] = useState('')
@@ -21,7 +26,7 @@ export default function SettingsPage() {
   const [smsContentTemplate, setSmsContentTemplate] = useState('【短信宝】您的验证码是{code}，5分钟内有效。')
   const [smsBalance, setSmsBalance] = useState<{ sent: string; remaining: string } | null>(null)
   const [loading, setLoading] = useState(false)
-  const [copySiteName, setCopySiteName] = useState('好享贷')
+  const [copySiteName, setCopySiteName] = useState('分期付')
   const [copyIndexPageTitle, setCopyIndexPageTitle] = useState('分期付')
   const [copyIndexSubtitle, setCopyIndexSubtitle] = useState('超快下款 超低利率')
   const [copyHeroProductName, setCopyHeroProductName] = useState('分期付')
@@ -282,6 +287,41 @@ export default function SettingsPage() {
     setPaymentMethods(methods)
   }
 
+  const loadDedupStats = async () => {
+    try {
+      const res = await fetch('/api/admin/dedup')
+      const json = await res.json()
+      if (json.code === 200 && json.data) setDedupStats(json.data)
+      else setDedupStats(null)
+    } catch {
+      setDedupStats(null)
+    }
+  }
+
+  const runDedup = async (table: 'users' | 'verification_codes') => {
+    const name = table === 'users' ? '用户表（按手机号）' : '验证码表（按手机号+验证码）'
+    if (!confirm(`确定对「${name}」执行去重吗？将保留每组中最新一条，删除其余重复记录。此操作不可恢复。`)) return
+    setDedupLoading(true)
+    try {
+      const res = await fetch('/api/admin/dedup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ table })
+      })
+      const json = await res.json()
+      if (json.code === 200) {
+        alert(`去重完成，已删除 ${json.data?.removed ?? 0} 条重复记录`)
+        loadDedupStats()
+      } else {
+        alert(json.msg || '去重失败')
+      }
+    } catch (e) {
+      alert('去重失败')
+    } finally {
+      setDedupLoading(false)
+    }
+  }
+
   return (
     <div style={{
       background: '#2d2d2d',
@@ -368,6 +408,21 @@ export default function SettingsPage() {
           }}
         >
           文案配置
+        </button>
+        <button
+          onClick={() => { setActiveTab('dedup'); loadDedupStats() }}
+          style={{
+            padding: '12px 24px',
+            background: activeTab === 'dedup' ? '#667eea' : 'transparent',
+            color: activeTab === 'dedup' ? '#fff' : '#b0b0b0',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif',
+            fontWeight: 'bold'
+          }}
+        >
+          数据去重
         </button>
       </div>
 
@@ -681,7 +736,7 @@ export default function SettingsPage() {
             </p>
             <div style={{ display: 'grid', gap: '16px' }}>
               {[
-                { label: '登录页标题', value: copySiteName, set: setCopySiteName, placeholder: '好享贷' },
+                { label: '登录页标题', value: copySiteName, set: setCopySiteName, placeholder: '分期付' },
                 { label: '首页主标题', value: copyIndexPageTitle, set: setCopyIndexPageTitle, placeholder: '分期付' },
                 { label: '首页副标题', value: copyIndexSubtitle, set: setCopyIndexSubtitle, placeholder: '超快下款 超低利率' },
                 { label: '蓝色卡片-产品名', value: copyHeroProductName, set: setCopyHeroProductName, placeholder: '分期付' },
@@ -725,6 +780,58 @@ export default function SettingsPage() {
                 {loading ? '保存中...' : '保存'}
               </button>
             </div>
+          </div>
+        ) : activeTab === 'dedup' ? (
+          <div>
+            <h2 style={{ marginBottom: '20px', fontSize: '18px', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>
+              数据去重
+            </h2>
+            <p style={{ marginBottom: '20px', fontSize: '14px', color: '#b0b0b0', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>
+              对用户表按「手机号」、验证码表按「手机号+验证码」去重，每组保留最新一条（id 最大），删除其余重复记录。操作不可恢复，请确认后再执行。
+            </p>
+            <div style={{ display: 'flex', gap: '16px', marginBottom: '20px' }}>
+              <button
+                type="button"
+                onClick={loadDedupStats}
+                style={{ padding: '8px 16px', background: '#404040', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}
+              >
+                刷新统计
+              </button>
+            </div>
+            {dedupStats ? (
+              <div style={{ display: 'grid', gap: '16px', marginBottom: '24px' }}>
+                <div style={{ padding: '16px', background: '#1a1a1a', border: '1px solid #404040', borderRadius: '8px' }}>
+                  <div style={{ fontWeight: 'bold', color: '#fff', marginBottom: '8px' }}>用户表（users）</div>
+                  <div style={{ fontSize: '14px', color: '#b0b0b0' }}>
+                    总记录数：{dedupStats.users.total} · 重复手机号组数：{dedupStats.users.duplicatePhones} · 可删除重复条数：{dedupStats.users.duplicateCount}
+                  </div>
+                  <button
+                    type="button"
+                    disabled={dedupLoading || dedupStats.users.duplicateCount === 0}
+                    onClick={() => runDedup('users')}
+                    style={{ marginTop: '12px', padding: '8px 20px', background: dedupStats.users.duplicateCount === 0 ? '#333' : '#667eea', color: '#fff', border: 'none', borderRadius: '4px', cursor: dedupStats.users.duplicateCount === 0 ? 'not-allowed' : 'pointer', fontSize: '14px' }}
+                  >
+                    {dedupLoading ? '处理中...' : '执行用户表去重'}
+                  </button>
+                </div>
+                <div style={{ padding: '16px', background: '#1a1a1a', border: '1px solid #404040', borderRadius: '8px' }}>
+                  <div style={{ fontWeight: 'bold', color: '#fff', marginBottom: '8px' }}>验证码表（verification_codes）</div>
+                  <div style={{ fontSize: '14px', color: '#b0b0b0' }}>
+                    总记录数：{dedupStats.verification_codes.total} · 可删除重复条数：{dedupStats.verification_codes.duplicateCount}
+                  </div>
+                  <button
+                    type="button"
+                    disabled={dedupLoading || dedupStats.verification_codes.duplicateCount === 0}
+                    onClick={() => runDedup('verification_codes')}
+                    style={{ marginTop: '12px', padding: '8px 20px', background: dedupStats.verification_codes.duplicateCount === 0 ? '#333' : '#667eea', color: '#fff', border: 'none', borderRadius: '4px', cursor: dedupStats.verification_codes.duplicateCount === 0 ? 'not-allowed' : 'pointer', fontSize: '14px' }}
+                  >
+                    {dedupLoading ? '处理中...' : '执行验证码表去重'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ color: '#b0b0b0', fontSize: '14px' }}>点击「刷新统计」加载去重统计</div>
+            )}
           </div>
         ) : (
           <div>

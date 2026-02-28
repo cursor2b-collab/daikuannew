@@ -83,7 +83,7 @@ export default function ProfilePage() {
           <span className="menu-arrow">›</span>
         </div>
         <div className="profile-menu-item" onClick={() => handleMenuClick('super-service')}>
-          <span>借款顾问</span>
+          <span>在线客服</span>
           <span className="menu-arrow">›</span>
         </div>
         <div className="profile-menu-item logout-item" onClick={handleLogout}>

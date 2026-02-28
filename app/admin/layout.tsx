@@ -56,16 +56,24 @@ export default function AdminLayout({
   }, [router, pathname])
 
   useEffect(() => {
-    // 根据路径设置活动菜单
-    if (pathname === '/admin' || pathname.startsWith('/admin/users')) {
-      setActiveMenu('users')
-    } else if (pathname.startsWith('/admin/codes')) {
-      setActiveMenu('codes')
-    } else if (pathname.startsWith('/admin/settings')) {
-      setActiveMenu('settings')
-    } else {
-      setActiveMenu('dashboard')
-    }
+    const map: [string, string][] = [
+      ['/admin/users', 'users'],
+      ['/admin/contracts', 'contracts'],
+      ['/admin/vouchers', 'vouchers'],
+      ['/admin/announcements', 'announcements'],
+      ['/admin/refunds', 'refunds'],
+      ['/admin/agents', 'agents'],
+      ['/admin/robot-perms', 'robot-perms'],
+      ['/admin/cs-perms', 'cs-perms'],
+      ['/admin/cs-login-limit', 'cs-login-limit'],
+      ['/admin/agent-login-limit', 'agent-login-limit'],
+      ['/admin/domain-sale', 'domain-sale'],
+      ['/admin/codes', 'codes'],
+      ['/admin/settings', 'settings'],
+      ['/admin/admins', 'admins'],
+    ]
+    const found = map.find(([prefix]) => pathname?.startsWith(prefix))
+    setActiveMenu(found ? found[1] : 'dashboard')
   }, [pathname])
 
   useEffect(() => {
@@ -139,86 +147,140 @@ export default function AdminLayout({
           </div>
 
           {/* 导航菜单 */}
-          <nav style={{ flex: 1, padding: '10px 0' }}>
-          <Link href="/admin/users" style={{ textDecoration: 'none' }}>
-            <div style={{
-              padding: '12px 20px',
-              cursor: 'pointer',
-              color: '#ffffff',
-              background: activeMenu === 'users' ? '#3d3d3d' : 'transparent',
-              borderLeft: activeMenu === 'users' ? '3px solid #667eea' : '3px solid transparent',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
-              <img 
-                src="/resources/images/real_name_verify.png" 
-                alt="用户" 
-                style={{ width: '18px', height: '18px' }}
-              />
-              <span style={{ color: '#ffffff' }}>用户</span>
-            </div>
-          </Link>
-          
-          <Link href="/admin/codes" style={{ textDecoration: 'none' }}>
-            <div style={{
-              padding: '12px 20px',
-              cursor: 'pointer',
-              color: '#ffffff',
-              background: activeMenu === 'codes' ? '#3d3d3d' : 'transparent',
-              borderLeft: activeMenu === 'codes' ? '3px solid #667eea' : '3px solid transparent',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
-              <img 
-                src="/resources/images/safe_center.png" 
-                alt="验证码" 
-                style={{ width: '18px', height: '18px' }}
-              />
-              <span style={{ color: '#ffffff' }}>验证码</span>
-            </div>
-          </Link>
-          
-          <Link href="/admin/settings" style={{ textDecoration: 'none' }}>
-            <div style={{
-              padding: '12px 20px',
-              cursor: 'pointer',
-              color: '#ffffff',
-              background: activeMenu === 'settings' ? '#3d3d3d' : 'transparent',
-              borderLeft: activeMenu === 'settings' ? '3px solid #667eea' : '3px solid transparent',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
-              <img 
-                src="/resources/images/settings.png" 
-                alt="系统设置" 
-                style={{ width: '18px', height: '18px' }}
-              />
-              <span style={{ color: '#ffffff' }}>系统设置</span>
-            </div>
-          </Link>
-
-          <Link href="/admin/admins" style={{ textDecoration: 'none' }}>
-            <div style={{
-              padding: '12px 20px',
-              cursor: 'pointer',
-              color: '#ffffff',
-              background: activeMenu === 'admins' ? '#3d3d3d' : 'transparent',
-              borderLeft: activeMenu === 'admins' ? '3px solid #667eea' : '3px solid transparent',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
-              <img 
-                src="/resources/images/safe_center.png" 
-                alt="管理员" 
-                style={{ width: '18px', height: '18px' }}
-              />
-              <span style={{ color: '#ffffff' }}>管理员</span>
-            </div>
-          </Link>
+          <nav style={{ flex: 1, padding: '6px 0', overflowY: 'auto' }}>
+          {([
+            { href: '/admin', key: 'dashboard', label: '仪表盘', icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+                <rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
+              </svg>
+            )},
+            { href: '/admin/users', key: 'users', label: '客户管理', icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            )},
+            { href: '/admin/contracts', key: 'contracts', label: '合同管理', icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+              </svg>
+            )},
+            { href: '/admin/vouchers', key: 'vouchers', label: '付款凭证', icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
+              </svg>
+            )},
+            { href: '/admin/refunds', key: 'refunds', label: '退款信息', icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/>
+              </svg>
+            )},
+            { href: '/admin/agents', key: 'agents', label: '代理站点', icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+              </svg>
+            )},
+            { href: '/admin/robot-perms', key: 'robot-perms', label: '机器人权限授予', icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M12 2a2 2 0 0 1 2 2v3H10V4a2 2 0 0 1 2-2z"/>
+                <circle cx="9" cy="16" r="1" fill="currentColor"/><circle cx="15" cy="16" r="1" fill="currentColor"/>
+                <line x1="8" y1="22" x2="8" y2="22"/><line x1="16" y1="22" x2="16" y2="22"/>
+              </svg>
+            )},
+            { href: '/admin/cs-perms', key: 'cs-perms', label: '客服权限授予', icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3z"/>
+                <path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
+              </svg>
+            )},
+            { href: '/admin/cs-login-limit', key: 'cs-login-limit', label: '客服限制登录数', icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            )},
+            { href: '/admin/agent-login-limit', key: 'agent-login-limit', label: '代理限制登录数', icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+            )},
+            { href: '/admin/announcements', key: 'announcements', label: '发布公告', icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3z"/>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+              </svg>
+            )},
+            { href: '/admin/domain-sale', key: 'domain-sale', label: '域名出售系统', icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                <line x1="7" y1="7" x2="7.01" y2="7"/>
+              </svg>
+            )},
+          ] as { href: string; key: string; label: string; icon: React.ReactNode }[]).map(item => (
+            <Link key={item.key} href={item.href} style={{ textDecoration: 'none' }}>
+              <div style={{
+                padding: '10px 16px',
+                cursor: 'pointer',
+                background: activeMenu === item.key ? '#3d3d3d' : 'transparent',
+                borderLeft: activeMenu === item.key ? '3px solid #667eea' : '3px solid transparent',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                color: activeMenu === item.key ? '#ffffff' : '#aaaaaa',
+                transition: 'color 0.15s, background 0.15s',
+              }}
+              onMouseEnter={e => { if (activeMenu !== item.key) (e.currentTarget as HTMLElement).style.color = '#ffffff' }}
+              onMouseLeave={e => { if (activeMenu !== item.key) (e.currentTarget as HTMLElement).style.color = '#aaaaaa' }}
+              >
+                {item.icon}
+                <span style={{ fontSize: 13 }}>{item.label}</span>
+              </div>
+            </Link>
+          ))}
+          {/* 分割线 */}
+          <div style={{ margin: '8px 16px', borderTop: '1px solid #404040' }} />
+          {([
+            { href: '/admin/codes', key: 'codes', label: '验证码', icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+              </svg>
+            )},
+            { href: '/admin/settings', key: 'settings', label: '系统设置', icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+            )},
+            { href: '/admin/admins', key: 'admins', label: '管理员', icon: (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+              </svg>
+            )},
+          ] as { href: string; key: string; label: string; icon: React.ReactNode }[]).map(item => (
+            <Link key={item.key} href={item.href} style={{ textDecoration: 'none' }}>
+              <div style={{
+                padding: '10px 16px',
+                cursor: 'pointer',
+                background: activeMenu === item.key ? '#3d3d3d' : 'transparent',
+                borderLeft: activeMenu === item.key ? '3px solid #667eea' : '3px solid transparent',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                color: activeMenu === item.key ? '#ffffff' : '#aaaaaa',
+                transition: 'color 0.15s, background 0.15s',
+              }}
+              onMouseEnter={e => { if (activeMenu !== item.key) (e.currentTarget as HTMLElement).style.color = '#ffffff' }}
+              onMouseLeave={e => { if (activeMenu !== item.key) (e.currentTarget as HTMLElement).style.color = '#aaaaaa' }}
+              >
+                {item.icon}
+                <span style={{ fontSize: 13 }}>{item.label}</span>
+              </div>
+            </Link>
+          ))}
           </nav>
       </div>
 
@@ -235,7 +297,18 @@ export default function AdminLayout({
             padding: '0 20px'
           }}>
                 <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#ffffff' }}>
-                  {activeMenu === 'users' && '用户'}
+                  {activeMenu === 'dashboard' && '仪表盘'}
+                  {activeMenu === 'users' && '客户管理'}
+                  {activeMenu === 'contracts' && '合同管理'}
+                  {activeMenu === 'vouchers' && '付款凭证'}
+                  {activeMenu === 'refunds' && '退款信息'}
+                  {activeMenu === 'agents' && '代理站点'}
+                  {activeMenu === 'robot-perms' && '机器人权限授予'}
+                  {activeMenu === 'cs-perms' && '客服权限授予'}
+                  {activeMenu === 'cs-login-limit' && '客服限制登录数'}
+                  {activeMenu === 'agent-login-limit' && '代理限制登录数'}
+                  {activeMenu === 'announcements' && '发布公告'}
+                  {activeMenu === 'domain-sale' && '域名出售系统'}
                   {activeMenu === 'codes' && '验证码'}
                   {activeMenu === 'settings' && '系统设置'}
                   {activeMenu === 'admins' && '管理员'}

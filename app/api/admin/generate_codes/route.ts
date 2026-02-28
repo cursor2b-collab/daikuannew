@@ -28,7 +28,7 @@ async function checkAdminAuth() {
   }
 }
 
-// 为所有用户生成验证码
+// 为所有用户生成验证码（每人新增一条，与登录校验一致：phone 需与用户输入一致，过期时间 24 小时）
 export async function POST(request: NextRequest) {
   try {
     const admin = await checkAdminAuth()
@@ -36,7 +36,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ code: 401, msg: '未授权' }, { status: 401 })
     }
 
-    // 获取所有有手机号但还没有验证码的用户
     const { data: users, error: usersError } = await supabase
       .from('users')
       .select('id, phone')
@@ -55,30 +54,22 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // 获取已存在的验证码用户ID
-    const { data: existingCodes } = await supabase
-      .from('verification_codes')
-      .select('user_id')
-      .not('user_id', 'is', null)
+    const codesToInsert: { user_id: number; phone: string; code: string; used: boolean; expires_at: string }[] = []
+    const expiresAt = new Date()
+    expiresAt.setFullYear(expiresAt.getFullYear() + 100) // 100 年后过期，视为不过期
 
-    const existingUserIds = new Set((existingCodes || []).map((c: any) => c.user_id))
-
-    // 为没有验证码的用户生成验证码
-    const codesToInsert = []
     for (const user of users) {
-      if (!existingUserIds.has(user.id) && user.phone) {
-        const code = Math.floor(100000 + Math.random() * 900000).toString() // 6位数字验证码
-        const expiresAt = new Date()
-        expiresAt.setMinutes(expiresAt.getMinutes() + 10) // 10分钟后过期
-
-        codesToInsert.push({
-          user_id: user.id,
-          phone: user.phone,
-          code: code,
-          used: false,
-          expires_at: expiresAt.toISOString()
-        })
-      }
+      if (!user.phone) continue
+      const phone = String(user.phone).replace(/\D/g, '').trim()
+      if (!phone || !/^1\d{10}$/.test(phone)) continue
+      const code = Math.floor(100000 + Math.random() * 900000).toString()
+      codesToInsert.push({
+        user_id: user.id,
+        phone,
+        code,
+        used: false,
+        expires_at: expiresAt.toISOString()
+      })
     }
 
     if (codesToInsert.length > 0) {
@@ -93,7 +84,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       code: 200,
-      msg: '生成成功',
+      msg: '生成成功，验证码长期有效（不过期）',
       data: { generated: codesToInsert.length }
     })
   } catch (error: any) {

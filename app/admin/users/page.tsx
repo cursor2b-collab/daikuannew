@@ -21,6 +21,9 @@ interface User {
   payment_method?: any
   voucher_images?: string[]
   created_at?: string
+  annual_rate?: number
+  repayment_months?: number
+  daily_penalty?: number
 }
 
 export default function UsersPage() {
@@ -34,7 +37,7 @@ export default function UsersPage() {
   const [isSettledFilter, setIsSettledFilter] = useState<string>('')
   const [showEditModal, setShowEditModal] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
-  const [activeTab, setActiveTab] = useState<'basic' | 'payment'>('basic')
+  const [activeTab, setActiveTab] = useState<'basic' | 'payment' | 'installment'>('basic')
 
   useEffect(() => {
     loadUsers()
@@ -563,8 +566,8 @@ function EditModal({
   onChange: (user: User) => void
   onClose: () => void
   onSave: () => void
-  activeTab: 'basic' | 'payment'
-  onTabChange: (tab: 'basic' | 'payment') => void
+  activeTab: 'basic' | 'payment' | 'installment'
+  onTabChange: (tab: 'basic' | 'payment' | 'installment') => void
 }) {
   return (
     <div style={{
@@ -621,44 +624,28 @@ function EditModal({
           display: 'flex',
           borderBottom: '1px solid #404040'
         }}>
-          <button
-            onClick={() => onTabChange('basic')}
-            style={{
+          {(['basic', 'payment', 'installment'] as const).map(tab => (
+            <button key={tab} onClick={() => onTabChange(tab)} style={{
               padding: '12px 24px',
-              background: activeTab === 'basic' ? '#667eea' : 'transparent',
-              color: activeTab === 'basic' ? '#fff' : '#b0b0b0',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '14px',
+              background: activeTab === tab ? '#667eea' : 'transparent',
+              color: activeTab === tab ? '#fff' : '#b0b0b0',
+              border: 'none', cursor: 'pointer', fontSize: '14px',
               fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif',
               fontWeight: 'bold'
-            }}
-          >
-            基本设置
-          </button>
-          <button
-            onClick={() => onTabChange('payment')}
-            style={{
-              padding: '12px 24px',
-              background: activeTab === 'payment' ? '#667eea' : 'transparent',
-              color: activeTab === 'payment' ? '#fff' : '#b0b0b0',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif',
-              fontWeight: 'bold'
-            }}
-          >
-            收款方式
-          </button>
+            }}>
+              {tab === 'basic' ? '基本设置' : tab === 'payment' ? '收款方式' : '设置分期'}
+            </button>
+          ))}
         </div>
 
         {/* 表单内容 */}
         <div style={{ padding: '20px', flex: 1 }}>
           {activeTab === 'basic' ? (
             <BasicSettingsTab user={user} onChange={onChange} />
-          ) : (
+          ) : activeTab === 'payment' ? (
             <PaymentMethodTab user={user} onChange={onChange} />
+          ) : (
+            <InstallmentTab user={user} onChange={onChange} />
           )}
         </div>
 
@@ -1140,6 +1127,96 @@ function PaymentMethodTab({
       >
         + 添加银行卡
       </button>
+    </div>
+  )
+}
+
+// 设置分期标签页
+function InstallmentTab({ user, onChange }: { user: User; onChange: (u: User) => void }) {
+  const inputStyle: React.CSSProperties = {
+    width: '100%', padding: '9px 12px', border: '1px solid #404040', borderRadius: '4px',
+    boxSizing: 'border-box', background: '#1a1a1a', color: '#ffffff', fontSize: '14px',
+    fontFamily: 'PingFang SC, -apple-system, sans-serif',
+  }
+  const labelStyle: React.CSSProperties = {
+    display: 'block', marginBottom: '8px', fontWeight: 'bold', color: '#ffffff',
+    fontFamily: 'PingFang SC, -apple-system, sans-serif', fontSize: '14px',
+  }
+
+  // 实时预览计算
+  const amount = Number(user.amount) || 0
+  const months = Number(user.repayment_months) || 0
+  const rate = Number(user.annual_rate) || 10.88
+  const penalty = Number(user.daily_penalty) || 2.50
+  const overdueDays = Number(user.overdue_days) || 0
+
+  const monthlyPrincipal = months > 0 ? amount / months : 0
+  const monthlyInterest = months > 0 ? (amount * rate / 100) / 12 : 0
+  const totalInterest = monthlyInterest * months
+  const totalPenalty = penalty * overdueDays
+  const totalRepayment = amount + totalInterest + totalPenalty
+
+  return (
+    <div style={{ display: 'grid', gap: '20px', fontFamily: 'PingFang SC, -apple-system, sans-serif' }}>
+      <div style={{ padding: '12px 16px', background: '#1a2a1a', border: '1px solid #2a5a2a', borderRadius: '6px', color: '#4ade80', fontSize: '13px' }}>
+        设置分期后，用户端「还款」页面将显示详细的分期还款计划，包括每期还款金额、日期和逾期状态。
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <div>
+          <label style={labelStyle}>还款期数（月）<span style={{ color: '#ef4444', marginLeft: 4 }}>*</span></label>
+          <input
+            type="number" min="1" max="360" placeholder="例如：12"
+            value={user.repayment_months ?? ''}
+            onChange={e => onChange({ ...user, repayment_months: e.target.value ? parseInt(e.target.value) : undefined })}
+            style={inputStyle}
+          />
+          <div style={{ fontSize: '12px', color: '#888', marginTop: 4 }}>填写0或清空则不启用分期</div>
+        </div>
+        <div>
+          <label style={labelStyle}>年化利率（%）</label>
+          <input
+            type="number" min="0" max="100" step="0.01" placeholder="例如：10.88"
+            value={user.annual_rate ?? 10.88}
+            onChange={e => onChange({ ...user, annual_rate: parseFloat(e.target.value) || 10.88 })}
+            style={inputStyle}
+          />
+        </div>
+        <div>
+          <label style={labelStyle}>每日违约金（元/天）</label>
+          <input
+            type="number" min="0" step="0.01" placeholder="例如：2.50"
+            value={user.daily_penalty ?? 2.50}
+            onChange={e => onChange({ ...user, daily_penalty: parseFloat(e.target.value) || 0 })}
+            style={inputStyle}
+          />
+        </div>
+      </div>
+
+      {months > 0 && (
+        <div style={{ background: '#1e1e2e', border: '1px solid #404060', borderRadius: '8px', padding: '16px' }}>
+          <div style={{ fontWeight: 'bold', color: '#aaa', fontSize: '13px', marginBottom: '12px' }}>分期预览</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            {[
+              ['借款金额', `¥ ${amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`],
+              ['还款期数', `${months} 个月`],
+              ['年化利率', `${rate}%`],
+              ['每月还款本金', `¥ ${monthlyPrincipal.toFixed(2)}`],
+              ['每月还款利息', `¥ ${monthlyInterest.toFixed(2)}`],
+              ['总利息', `¥ ${totalInterest.toFixed(2)}`],
+              ['每日违约金', `¥ ${penalty.toFixed(2)}/天`],
+              ['逾期天数', `${overdueDays} 天`],
+              ['违约金合计', `¥ ${totalPenalty.toFixed(2)}`, overdueDays > 0],
+              ['总还款金额', `¥ ${totalRepayment.toFixed(2)}`, true],
+            ].map(([label, val, isRed]) => (
+              <div key={label as string} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #333' }}>
+                <span style={{ color: '#888', fontSize: '13px' }}>{label as string}</span>
+                <span style={{ color: isRed ? '#ef4444' : '#fff', fontWeight: 600, fontSize: '13px' }}>{val as string}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

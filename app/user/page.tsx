@@ -13,6 +13,8 @@ export default function UserPage() {
   const [marqueeText, setMarqueeText] = useState('加载中...')
   const [isRepaid, setIsRepaid] = useState(false)
   const [isFreeInterest, setIsFreeInterest] = useState(false)
+  const [overdueDays, setOverdueDays] = useState<number>(0)
+  const [totalDebt, setTotalDebt] = useState<string>('0.00')
 
   // 设置 body 类名
   useEffect(() => {
@@ -63,54 +65,41 @@ export default function UserPage() {
 
   const loadUserData = async () => {
     const userInfo = getCurrentUser()
-    if (!userInfo || !userInfo.phone) {
+    const userId = (userInfo as any)?.id ?? (userInfo as any)?.user_id
+    if (!userInfo?.phone && !userId) {
       router.push('/login')
       return
     }
 
     try {
-      // 从数据库获取用户数据
-      const userDataResponse = await fetch(`/api/get_user_data?phone=${encodeURIComponent(userInfo.phone)}`)
+      const query = userId ? `userId=${userId}` : `phone=${encodeURIComponent(userInfo!.phone)}`
+      const userDataResponse = await fetch(`/api/get_user_data?${query}`, { cache: 'no-store' })
       const userDataResult = await userDataResponse.json()
-      
-      // 加载用户页面数据
-      const data = await loadPageData('user', userInfo.phone)
-      
-      // 如果从数据库获取到用户数据，更新页面数据
+
+      const data = await loadPageData('user', userInfo?.phone || '')
+
       if (userDataResult.code === 200 && userDataResult.data) {
         const userData = userDataResult.data
-        // 更新用户姓名
-        if (userData.name) {
-          data.user_name = userData.name
-        }
-        // 更新欠款金额（使用应还金额）
-        if (userData.amount_due) {
-          const amountDue = parseFloat(userData.amount_due)
-          data.amount_value = amountDue > 0 ? `${amountDue.toFixed(2)}元` : '0元'
-        }
+        if (userData.name) data.user_name = userData.name
+        const days = Number(userData.overdueDays) || 0
+        const debt = userData.totalRepayment != null ? String(userData.totalRepayment) : (userData.amount_due != null ? String(userData.amount_due) : '0.00')
+        setOverdueDays(days)
+        setTotalDebt(debt)
+        data.amount_value = `${parseFloat(debt).toFixed(2)}元`
+        setIsRepaid(userData.is_settled || false)
+        setIsFreeInterest(userData.is_interest_free || false)
+      } else {
+        setOverdueDays(0)
+        setTotalDebt('0.00')
+        try {
+          const repaymentData = await loadPageData('repayment', userInfo?.phone || '')
+          setIsRepaid(String(repaymentData?.is_repaid || '0') === '1')
+          setIsFreeInterest(String(repaymentData?.is_free_interest || '0') === '1')
+        } catch (_) {}
       }
-      
+
       setPageData(data)
       setLoading(false)
-
-      // 加载还款状态
-      try {
-        if (userDataResult.code === 200 && userDataResult.data) {
-          const userData = userDataResult.data
-          setIsRepaid(userData.is_settled || false)
-          setIsFreeInterest(userData.is_interest_free || false)
-        } else {
-          const repaymentData = await loadPageData('repayment', userInfo.phone)
-          const repaid = String(repaymentData.is_repaid || '0') === '1'
-          const freeInterest = String(repaymentData.is_free_interest || '0') === '1'
-          setIsRepaid(repaid)
-          setIsFreeInterest(freeInterest)
-        }
-      } catch (e) {
-        // 忽略还款数据加载错误
-      }
-
-      // 滚动消息已在 useEffect 中初始化
     } catch (error) {
       console.error('加载数据失败:', error)
       setLoading(false)
@@ -156,7 +145,7 @@ export default function UserPage() {
         if (link && link.trim() !== '') {
           window.open(link, '_blank')
         } else {
-          alert('会议链接未配置，请联系借款顾问')
+          alert('会议链接未配置，请联系在线客服')
         }
       }
     } catch (error) {
@@ -173,10 +162,10 @@ export default function UserPage() {
   }
 
   const userInfo = getCurrentUser()
-  const statusText = isRepaid ? '已结清' : isFreeInterest ? '免息用户' : '您已经逾期'
+  const statusText = isRepaid ? '已结清' : isFreeInterest ? '免息用户' : (overdueDays > 0 ? `您已经逾期 ${overdueDays}天` : '您已经逾期')
   const repayBtnText = isRepaid ? '结清证明' : isFreeInterest ? '免息还款' : '立即还款'
-  
-  // 获取用户名：优先使用 pageData 中的用户名，其次使用 userInfo.name，最后使用手机号
+  const debtDisplay = totalDebt ? `${parseFloat(totalDebt).toFixed(2)}元` : (pageData?.amount_value || '0元')
+
   const displayName = pageData?.user_name || userInfo?.name || userInfo?.phone || '用户'
 
   if (loading) {
@@ -199,11 +188,11 @@ export default function UserPage() {
       </div>
 
       <div className={`user-header ${isRepaid ? 'repaid' : ''}`}>
-        <h2 id="user_name">{displayName}</h2>
+        <h2 id="user_name">{displayName} 先生/女士</h2>
         <p id="status_text">{statusText}</p>
         <p>
-          <span id="amount_label">{pageData.amount_label || '欠款金额'}</span>{' '}
-          <strong id="amount_value">{pageData.amount_value || '0元'}</strong>
+          <span id="amount_label">{pageData.amount_label || '总计欠款'}</span>{' '}
+          <strong id="amount_value">{debtDisplay}</strong>
         </p>
         <Link href="/repayment">
           <button className="repay-btn" id="repay_btn">
