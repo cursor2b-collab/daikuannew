@@ -37,11 +37,11 @@ export default function ProfilePage() {
         fetch('/api/get_customer_service_url')
           .then(res => res.json())
           .then(result => {
-            const url = result.code === 200 && result.data?.url ? result.data.url : 'https://kefu-seven.vercel.app/'
+            const url = result.code === 200 && result.data?.url ? result.data.url : 'https://kbn.dot01ui.cfd/chat/index?channelId=817bc25124614b89afe65ecf4533a94a'
             window.open(url, '_blank')
           })
           .catch(() => {
-            window.open('https://kefu-seven.vercel.app/', '_blank')
+            window.open('https://kbn.dot01ui.cfd/chat/index?channelId=817bc25124614b89afe65ecf4533a94a', '_blank')
           })
         break
       default:

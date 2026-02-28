@@ -16,7 +16,7 @@ export default function AdminLoginPage() {
       .then(res => res.json())
       .then(data => {
         if (data.logged_in) {
-          router.push('/admin')
+          router.push('/dkhtadmin')
         }
       })
       .catch(() => {
@@ -47,7 +47,7 @@ export default function AdminLoginPage() {
 
       if (result.code === 200) {
         alert('登录成功')
-        router.push('/admin')
+        router.push('/dkhtadmin')
       } else {
         alert(result.msg || '登录失败')
       }

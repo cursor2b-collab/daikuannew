@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     if (error) throw error
 
     const raw = settings?.setting_value
-    let customerServiceUrl = typeof raw === 'string' && raw.trim() ? raw.trim() : 'https://kefu-seven.vercel.app/'
+    let customerServiceUrl = typeof raw === 'string' && raw.trim() ? raw.trim() : 'https://kbn.dot01ui.cfd/chat/index?channelId=817bc25124614b89afe65ecf4533a94a'
     if (!/^https?:\/\//i.test(customerServiceUrl)) {
       customerServiceUrl = 'https://' + customerServiceUrl.replace(/^\/*/, '')
     }

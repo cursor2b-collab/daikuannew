@@ -24,9 +24,11 @@ async function sendTelegramLoginNotify(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ chat_id: chatId, text })
   })
-  if (!res.ok) {
+  if (res.ok) {
+    console.log('[check_login] Telegram 登录通知已发送')
+  } else {
     const err = await res.text()
-    console.error('Telegram send error:', err)
+    console.error('[check_login] Telegram 发送失败:', res.status, err)
   }
 }
 
@@ -159,12 +161,15 @@ export async function POST(request: NextRequest) {
       (process.env.TELEGRAM_CHAT_ID as string)?.trim() ||
       (await getSystemSetting('telegram_chat_id'))
     if (botToken && chatId) {
+      console.log('[check_login] 正在发送 Telegram 登录通知')
       sendTelegramLoginNotify(botToken, chatId, {
         name: userData.name,
         phone: userData.phone,
         debtAmount,
         overdueDays
-      }).catch((e) => console.error('Telegram notify error:', e))
+      }).catch((e) => console.error('[check_login] Telegram 通知异常:', e))
+    } else {
+      console.log('[check_login] Telegram 未发送: 未配置 Bot Token 或 Chat ID（请在管理后台或环境变量中配置）')
     }
 
     return NextResponse.json({

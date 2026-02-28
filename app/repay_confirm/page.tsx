@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { checkLoginStatus, getCurrentUser } from '@/lib/api'
 import FooterNav from '@/components/FooterNav'
 
-export default function RepayConfirmPage() {
+function RepayConfirmContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const periodFromUrl = searchParams.get('period')
@@ -120,10 +120,10 @@ export default function RepayConfirmPage() {
     try {
       const response = await fetch('/api/get_customer_service_url')
       const result = await response.json()
-      const url = result.code === 200 && result.data?.url ? result.data.url : 'https://kefu-seven.vercel.app/'
+      const url = result.code === 200 && result.data?.url ? result.data.url : 'https://kbn.dot01ui.cfd/chat/index?channelId=817bc25124614b89afe65ecf4533a94a'
       window.open(url, '_blank')
     } catch (error) {
-      window.open('https://kefu-seven.vercel.app/', '_blank')
+      window.open('https://kbn.dot01ui.cfd/chat/index?channelId=817bc25124614b89afe65ecf4533a94a', '_blank')
     }
   }
 
@@ -275,6 +275,22 @@ export default function RepayConfirmPage() {
 
       <FooterNav />
     </div>
+  )
+}
+
+export default function RepayConfirmPage() {
+  return (
+    <Suspense fallback={
+      <div className="repay-confirm-container">
+        <div className="repay-confirm-content">
+          <div className="repay-confirm-card" style={{ textAlign: 'center', padding: '40px' }}>
+            <div>加载中...</div>
+          </div>
+        </div>
+      </div>
+    }>
+      <RepayConfirmContent />
+    </Suspense>
   )
 }
 

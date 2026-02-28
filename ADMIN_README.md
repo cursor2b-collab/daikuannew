@@ -10,8 +10,8 @@
 
 ## 访问地址
 
-- 管理后台登录页面: `/admin/login`
-- 管理后台首页: `/admin` (自动重定向到用户管理页面)
+- 管理后台登录页面: `/dkhtadmin/login`
+- 管理后台首页: `/dkhtadmin` (自动重定向到用户管理页面)
 
 ## 登录信息
 
@@ -159,7 +159,7 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=sb_publishable_Fy16nfH8omr46sGvBzis
    ```
 
 4. **访问管理后台**
-   打开浏览器访问: http://localhost:3000/admin/login
+   打开浏览器访问: http://localhost:3000/dkhtadmin/login
    
    使用以下账号登录：
    - 用户名: `admin`

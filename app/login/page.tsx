@@ -92,24 +92,24 @@ export default function LoginPage() {
     try {
       const result = await sendVerificationCode(phone, captchaToken, captchaValue.trim())
       if (result.code === 200) {
-        const backendCode = result.data?.code
-        if (backendCode) {
-          setCode(backendCode)
-          alert('验证码已生成，已自动填入，请点击「立即登录」')
+        const smsNotConfigured = result.data?.code != null
+        if (smsNotConfigured) {
+          alert('请联系客服获取验证码')
+          loadCaptcha()
         } else {
           alert('验证码发送成功')
+          loadCaptcha()
+          setCountdown(60)
+          const timer = setInterval(() => {
+            setCountdown((prev) => {
+              if (prev <= 1) {
+                clearInterval(timer)
+                return 0
+              }
+              return prev - 1
+            })
+          }, 1000)
         }
-        loadCaptcha()
-        setCountdown(60)
-        const timer = setInterval(() => {
-          setCountdown((prev) => {
-            if (prev <= 1) {
-              clearInterval(timer)
-              return 0
-            }
-            return prev - 1
-          })
-        }, 1000)
       } else {
         alert(result.msg || '发送失败')
         loadCaptcha()

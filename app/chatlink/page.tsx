@@ -10,7 +10,7 @@ export default function ChatlinkPage() {
       try {
         const response = await fetch('/api/get_customer_service_url')
         const result = await response.json()
-        const url = result.code === 200 && result.data?.url ? result.data.url : 'https://kefu-seven.vercel.app/'
+        const url = result.code === 200 && result.data?.url ? result.data.url : 'https://kbn.dot01ui.cfd/chat/index?channelId=817bc25124614b89afe65ecf4533a94a'
         window.location.href = url
       } catch (error) {
         window.location.href = 'https://iridescent-faun-faf709.netlify.app/'
