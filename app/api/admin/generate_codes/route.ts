@@ -1,39 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
-import { cookies } from 'next/headers'
+import { supabase, hasServiceRoleKey } from '@/lib/supabase'
+import { getAdminFromCookie } from '@/lib/admin-auth'
 
 export const dynamic = 'force-dynamic'
-
-// 检查管理员登录状态
-async function checkAdminAuth() {
-  const cookieStore = await cookies()
-  const sessionCookie = cookieStore.get('admin_session')
-  
-  if (!sessionCookie?.value) {
-    return null
-  }
-
-  try {
-    const sessionData = JSON.parse(sessionCookie.value)
-    const { data: admin } = await supabase
-      .from('admin_users')
-      .select('id, username, status')
-      .eq('id', sessionData.admin_id)
-      .eq('status', 1)
-      .single()
-    
-    return admin
-  } catch {
-    return null
-  }
-}
 
 // 为所有用户生成验证码（每人新增一条，与登录校验一致：phone 需与用户输入一致，过期时间 24 小时）
 export async function POST(request: NextRequest) {
   try {
-    const admin = await checkAdminAuth()
+    const admin = await getAdminFromCookie()
     if (!admin) {
       return NextResponse.json({ code: 401, msg: '未授权' }, { status: 401 })
+    }
+    if (!hasServiceRoleKey()) {
+      return NextResponse.json(
+        { code: 503, msg: '服务未配置 SUPABASE_SERVICE_ROLE_KEY，无法写入数据库。请在 Vercel/环境变量中配置后重试。' },
+        { status: 503 }
+      )
     }
 
     const { data: users, error: usersError } = await supabase
@@ -89,8 +71,15 @@ export async function POST(request: NextRequest) {
     })
   } catch (error: any) {
     console.error('Generate codes error:', error)
+    const msg = error?.message || '生成验证码失败'
+    if (error?.code === '42501' || /permission denied|policy|RLS/i.test(String(msg))) {
+      return NextResponse.json(
+        { code: 503, msg: '数据库权限不足，请配置 SUPABASE_SERVICE_ROLE_KEY 后重试。' },
+        { status: 503 }
+      )
+    }
     return NextResponse.json(
-      { code: 500, msg: error.message || '生成验证码失败' },
+      { code: 500, msg },
       { status: 500 }
     )
   }

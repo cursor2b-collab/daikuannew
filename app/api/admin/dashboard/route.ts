@@ -1,25 +1,12 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { cookies } from 'next/headers'
+import { getAdminFromCookie } from '@/lib/admin-auth'
 
 export const dynamic = 'force-dynamic'
 
-async function checkAdminAuth() {
-  const cookieStore = await cookies()
-  const sessionCookie = cookieStore.get('admin_session')
-  if (!sessionCookie?.value) return null
-  try {
-    const sessionData = JSON.parse(sessionCookie.value)
-    const { data: admin } = await supabase
-      .from('admin_users').select('id, username, status')
-      .eq('id', sessionData.admin_id).eq('status', 1).single()
-    return admin
-  } catch { return null }
-}
-
 export async function GET() {
   try {
-    const admin = await checkAdminAuth()
+    const admin = await getAdminFromCookie()
     if (!admin) return NextResponse.json({ code: 401, msg: '未授权' }, { status: 401 })
 
     const [usersRes, settledRes, overdueRes, codesRes] = await Promise.all([

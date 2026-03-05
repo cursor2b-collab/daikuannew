@@ -425,7 +425,7 @@ export default function AdminLayout({
               onClick={handleLogout}
             >
               <UserIcon size={18} color="#ffffff" />
-              <span style={{ color: '#ffffff' }}>{adminInfo?.username || 'Administrator'}</span>
+              <span style={{ color: '#ffffff' }}>{adminInfo?.email || adminInfo?.username || 'Administrator'}</span>
               <span style={{ fontSize: '12px' }}>▼</span>
             </div>
             </div>

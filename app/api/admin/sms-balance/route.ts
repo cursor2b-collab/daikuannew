@@ -1,29 +1,11 @@
 import { NextResponse } from 'next/server'
 import { createHash } from 'crypto'
-import { cookies } from 'next/headers'
 import { supabase } from '@/lib/supabase'
+import { getAdminFromCookie } from '@/lib/admin-auth'
 
 export const dynamic = 'force-dynamic'
 
 const SMS_BAO_QUERY_URL = 'https://api.smsbao.com/query'
-
-async function checkAdminAuth() {
-  const cookieStore = await cookies()
-  const sessionCookie = cookieStore.get('admin_session')
-  if (!sessionCookie?.value) return null
-  try {
-    const sessionData = JSON.parse(sessionCookie.value)
-    const { data: admin } = await supabase
-      .from('admin_users')
-      .select('id, username, status')
-      .eq('id', sessionData.admin_id)
-      .eq('status', 1)
-      .single()
-    return admin
-  } catch {
-    return null
-  }
-}
 
 async function getSystemSetting(key: string): Promise<string> {
   try {
@@ -47,7 +29,7 @@ function toSmsBaoPassword(value: string): string {
 
 export async function GET() {
   try {
-    const admin = await checkAdminAuth()
+    const admin = await getAdminFromCookie()
     if (!admin) {
       return NextResponse.json({ code: 401, msg: '未授权' }, { status: 401 })
     }

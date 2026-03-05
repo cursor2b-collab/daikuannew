@@ -6,7 +6,7 @@ import styled from 'styled-components'
 
 export default function AdminLoginPage() {
   const router = useRouter()
-  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -27,15 +27,15 @@ export default function AdminLoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!username || !password) {
-      alert('请输入用户名和密码')
+    if (!email || !password) {
+      alert('请输入邮箱和密码')
       return
     }
 
     setLoading(true)
     try {
       const formData = new FormData()
-      formData.append('username', username)
+      formData.append('email', email)
       formData.append('password', password)
 
       const response = await fetch('/api/admin/login', {
@@ -72,10 +72,10 @@ export default function AdminLoginPage() {
               <div id="input-area">
                 <div className="form-inp">
                   <input 
-                    placeholder="请输入账号" 
-                    type="text" 
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="请输入邮箱" 
+                    type="email" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
                   />
                 </div>

@@ -5,11 +5,10 @@ import { useRouter } from 'next/navigation'
 
 interface Admin {
   id: string
-  username: string
-  status: number
-  login_at?: string
-  login_num: number
-  created_at: string
+  email?: string
+  username?: string
+  created_at?: string
+  last_sign_in_at?: string
 }
 
 export default function AdminsPage() {
@@ -17,7 +16,7 @@ export default function AdminsPage() {
   const [admins, setAdmins] = useState<Admin[]>([])
   const [loading, setLoading] = useState(false)
   const [showAddModal, setShowAddModal] = useState(false)
-  const [newAdmin, setNewAdmin] = useState({ username: '', password: '' })
+  const [newAdmin, setNewAdmin] = useState({ email: '', password: '' })
 
   useEffect(() => {
     loadAdmins()
@@ -41,8 +40,8 @@ export default function AdminsPage() {
   }
 
   const handleAddAdmin = async () => {
-    if (!newAdmin.username || !newAdmin.password) {
-      alert('请输入用户名和密码')
+    if (!newAdmin.email || !newAdmin.password) {
+      alert('请输入邮箱和密码')
       return
     }
 
@@ -56,7 +55,7 @@ export default function AdminsPage() {
       const response = await fetch('/api/admin/admins', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newAdmin)
+        body: JSON.stringify({ email: newAdmin.email, password: newAdmin.password })
       })
 
       const result = await response.json()
@@ -64,7 +63,7 @@ export default function AdminsPage() {
       if (result.code === 200) {
         alert('添加成功')
         setShowAddModal(false)
-        setNewAdmin({ username: '', password: '' })
+        setNewAdmin({ email: '', password: '' })
         loadAdmins()
       } else {
         alert(result.msg || '添加失败')
@@ -153,9 +152,7 @@ export default function AdminsPage() {
         }}>
           <thead>
             <tr style={{ background: '#3d3d3d', borderBottom: '1px solid #404040' }}>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>用户名</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>状态</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>登录次数</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>邮箱</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>最后登录</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>创建时间</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>操作</th>
@@ -164,37 +161,25 @@ export default function AdminsPage() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>
+                <td colSpan={4} style={{ padding: '40px', textAlign: 'center', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>
                   加载中...
                 </td>
               </tr>
             ) : admins.length === 0 ? (
               <tr>
-                <td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>
+                <td colSpan={4} style={{ padding: '40px', textAlign: 'center', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>
                   暂无数据
                 </td>
               </tr>
             ) : (
-              admins.map((admin) => (
-                <tr key={admin.id} style={{ borderBottom: '1px solid #404040', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>
-                  <td style={{ padding: '12px' }}>{admin.username}</td>
-                  <td style={{ padding: '12px' }}>
-                    <span style={{
-                      padding: '4px 8px',
-                      borderRadius: '4px',
-                      background: admin.status === 1 ? '#2d5a2d' : '#4d4d4d',
-                      color: admin.status === 1 ? '#4caf50' : '#b0b0b0',
-                      fontSize: '12px'
-                    }}>
-                      {admin.status === 1 ? '启用' : '禁用'}
-                    </span>
-                  </td>
-                  <td style={{ padding: '12px' }}>{admin.login_num || 0}</td>
-                  <td style={{ padding: '12px' }}>{formatDate(admin.login_at || '')}</td>
-                  <td style={{ padding: '12px' }}>{formatDate(admin.created_at)}</td>
+              admins.map((a) => (
+                <tr key={a.id} style={{ borderBottom: '1px solid #404040', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>
+                  <td style={{ padding: '12px' }}>{a.email ?? a.username ?? '-'}</td>
+                  <td style={{ padding: '12px' }}>{formatDate(a.last_sign_in_at || '')}</td>
+                  <td style={{ padding: '12px' }}>{formatDate(a.created_at || '')}</td>
                   <td style={{ padding: '12px' }}>
                     <button
-                      onClick={() => handleDeleteAdmin(admin.id)}
+                      onClick={() => handleDeleteAdmin(a.id)}
                       style={{
                         padding: '4px 8px',
                         background: '#dc2626',
@@ -243,12 +228,12 @@ export default function AdminsPage() {
 
             <div style={{ marginBottom: '15px' }}>
               <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', color: '#ffffff' }}>
-                用户名
+                邮箱
               </label>
               <input
-                type="text"
-                value={newAdmin.username}
-                onChange={(e) => setNewAdmin({ ...newAdmin, username: e.target.value })}
+                type="email"
+                value={newAdmin.email}
+                onChange={(e) => setNewAdmin({ ...newAdmin, email: e.target.value })}
                 style={{
                   width: '100%',
                   padding: '8px 12px',
@@ -260,7 +245,7 @@ export default function AdminsPage() {
                   fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif',
                   fontWeight: 'bold'
                 }}
-                placeholder="请输入用户名"
+                placeholder="请输入邮箱"
               />
             </div>
 
@@ -291,7 +276,7 @@ export default function AdminsPage() {
               <button
                 onClick={() => {
                   setShowAddModal(false)
-                  setNewAdmin({ username: '', password: '' })
+                  setNewAdmin({ email: '', password: '' })
                 }}
                 style={{
                   padding: '10px 20px',
