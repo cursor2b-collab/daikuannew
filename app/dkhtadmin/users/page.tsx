@@ -193,11 +193,16 @@ export default function UsersPage() {
                       return
                     }
 
-                    // 解析CSV：表头与每行按逗号分割，并统一去除首尾空白和 BOM
+                    // 自动检测分隔符：Excel/WPS 导出常为 Tab，纯 CSV 常为逗号
+                    const firstLine = lines[0]
+                    const tabCount = (firstLine.match(/\t/g) || []).length
+                    const commaCount = (firstLine.match(/,/g) || []).length
+                    const delim = tabCount >= commaCount && tabCount > 0 ? '\t' : ','
+
                     const normalize = (s: string) => s.replace(/^\uFEFF/, '').trim()
-                    const headers = lines[0].split(',').map((h: string) => normalize(h))
+                    const headers = firstLine.split(delim).map((h: string) => normalize(h))
                     const dataRows = lines.slice(1).map((line: string) => {
-                      const values = line.split(',').map((v: string) => v.trim())
+                      const values = line.split(delim).map((v: string) => v.trim())
                       const row: any = {}
                       headers.forEach((header: string, index: number) => {
                         row[header] = values[index] ?? ''
@@ -315,6 +320,39 @@ export default function UsersPage() {
             }}
           >
             ↓ 下载模板
+          </button>
+          <button
+            onClick={async () => {
+              if (!confirm('确定要一键清空所有客户数据吗？\n\n将删除全部客户记录及关联的验证码，且不可恢复。')) return
+              setLoading(true)
+              try {
+                const res = await fetch('/api/admin/users/clear', { method: 'POST' })
+                const result = await res.json()
+                if (result.code === 200) {
+                  alert(`清空成功！已删除 ${result.data?.deletedUsers ?? 0} 条客户、${result.data?.deletedCodes ?? 0} 条验证码。`)
+                  loadUsers()
+                } else {
+                  alert(result.msg || '清空失败')
+                }
+              } catch (e) {
+                alert('清空失败，请重试')
+              } finally {
+                setLoading(false)
+              }
+            }}
+            disabled={loading}
+            style={{
+              padding: '8px 16px',
+              background: '#8b2e2e',
+              border: '1px solid #a03a3a',
+              borderRadius: '4px',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              color: '#ffffff',
+              fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif',
+              fontWeight: 'bold'
+            }}
+          >
+            一键清空数据
           </button>
         </div>
 
