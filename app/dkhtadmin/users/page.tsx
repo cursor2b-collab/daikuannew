@@ -13,6 +13,7 @@ interface User {
   bank_card?: string
   amount?: number
   loan_date?: string
+  due_date?: string
   overdue_days?: number
   overdue_amount?: number
   amount_due?: number
@@ -21,9 +22,12 @@ interface User {
   payment_method?: any
   voucher_images?: string[]
   created_at?: string
+  updated_at?: string
   annual_rate?: number
   repayment_months?: number
   daily_penalty?: number
+  penalty_fee?: number
+  interest?: number
 }
 
 export default function UsersPage() {
@@ -208,17 +212,21 @@ export default function UsersPage() {
                       try {
                         const userData: any = {
                           name: row['姓名'] || row['name'] || '',
-                          phone: row['手机号码'] || row['phone'] || '',
-                          id_number: row['身份证号码'] || row['id_number'] || '',
+                          phone: row['手机号'] || row['手机号码'] || row['phone'] || '',
+                          id_number: row['身份证号'] || row['身份证号码'] || row['id_number'] || '',
                           loan_number: row['放款编号'] || row['loan_number'] || '',
                           bank_card: row['银行卡号'] || row['bank_card'] || '',
                           amount: parseFloat(row['金额'] || row['amount'] || '0'),
                           loan_date: row['放款时间'] || row['loan_date'] || null,
+                          due_date: row['到期时间'] || row['due_date'] || null,
+                          repayment_months: row['借款期数'] != null && row['借款期数'] !== '' ? parseInt(row['借款期数']) : (row['分期期数'] != null && row['分期期数'] !== '' ? parseInt(row['分期期数']) : null),
                           overdue_days: parseInt(row['逾期天数'] || row['overdue_days'] || '0'),
                           overdue_amount: parseFloat(row['逾期金额'] || row['overdue_amount'] || '0'),
+                          penalty_fee: row['违约金'] != null && row['违约金'] !== '' ? parseFloat(row['违约金']) : undefined,
+                          interest: row['利息'] != null && row['利息'] !== '' ? parseFloat(row['利息']) : undefined,
                           amount_due: parseFloat(row['应还金额'] || row['amount_due'] || '0'),
-                          is_settled: (row['是否结清'] || row['is_settled'] || '否') === '是' || (row['是否结清'] || row['is_settled']) === 'true',
-                          is_interest_free: (row['是否免息'] || row['is_interest_free'] || '否') === '是' || (row['是否免息'] || row['is_interest_free']) === 'true'
+                          is_settled: false,
+                          is_interest_free: false
                         }
 
                         const response = await fetch('/api/admin/users', {
@@ -280,7 +288,7 @@ export default function UsersPage() {
           <button
             onClick={() => {
               // 创建CSV模板内容
-              const csvContent = '姓名,手机号码,身份证号码,放款编号,银行卡号,金额,放款时间,逾期天数,逾期金额,应还金额,是否结清,是否免息\n示例,13800138000,110101199001011234,FQ123456789,6217000010001234567,10000,2024-01-01,0,0,10000,否,否'
+              const csvContent = '姓名,手机号,身份证号,银行卡号,金额,放款时间,到期时间,借款期数,逾期天数,逾期金额,违约金,利息,应还金额,分期期数,放款编号,添加时间,修改时间\n示例,13800138000,110101199001011234,6217000010001234567,10000,2024-01-01,2025-01-01,12,0,0,0,0,10000,12,FQ123456789,,'
               
               // 创建Blob对象
               const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
@@ -393,31 +401,35 @@ export default function UsersPage() {
               </th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>编号 ↕</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', minWidth: '80px' }}>姓名 ↕</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>手机号码 ↕</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>身份证号码 ↕</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>放款编号 ↕</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>手机号 ↕</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>身份证号 ↕</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>银行卡号 ↕</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>金额 ↕</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>放款时间 ↕</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>到期时间 ↕</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>借款期数 ↕</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>逾期天数 ↕</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>逾期金额 ↕</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>违约金 ↕</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>利息 ↕</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>应还金额 ↕</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>是否结清 ↕</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>是否免息 ↕</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>创建时间 ↕</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>分期期数 ↕</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>放款编号 ↕</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>添加时间 ↕</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>修改时间 ↕</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>操作</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={16} style={{ padding: '40px', textAlign: 'center', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>
+                <td colSpan={20} style={{ padding: '40px', textAlign: 'center', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>
                   加载中...
                 </td>
               </tr>
             ) : users.length === 0 ? (
               <tr>
-                <td colSpan={16} style={{ padding: '40px', textAlign: 'center', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>
+                <td colSpan={20} style={{ padding: '40px', textAlign: 'center', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>
                   暂无数据
                 </td>
               </tr>
@@ -431,20 +443,20 @@ export default function UsersPage() {
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold', whiteSpace: 'normal', wordBreak: 'break-all' }} title={user.name || ''}>{user.name || '-'}</td>
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{maskString(user.phone, 3, 3) || '-'}</td>
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{maskString(user.id_number, 4, 4) || '-'}</td>
-                  <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{user.loan_number || '-'}</td>
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{maskString(user.bank_card, 4, 4) || '-'}</td>
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{formatAmount(user.amount)}</td>
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{user.loan_date || '-'}</td>
-                  <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{user.overdue_days || '-'}</td>
+                  <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{user.due_date || '-'}</td>
+                  <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{user.repayment_months ?? '-'}</td>
+                  <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{user.overdue_days ?? '-'}</td>
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{formatAmount(user.overdue_amount)}</td>
+                  <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{formatAmount(user.penalty_fee)}</td>
+                  <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{formatAmount(user.interest)}</td>
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{formatAmount(user.amount_due)}</td>
-                  <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>
-                    {user.is_settled ? '已结清' : '未结清'}
-                  </td>
-                  <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>
-                    {user.is_interest_free ? '免息' : '-'}
-                  </td>
+                  <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{user.repayment_months ?? '-'}</td>
+                  <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{user.loan_number || '-'}</td>
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{formatDate(user.created_at)}</td>
+                  <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{formatDate(user.updated_at)}</td>
                   <td style={{ padding: '12px' }}>
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <a
@@ -862,6 +874,28 @@ function BasicSettingsTab({
 
       <div>
         <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>
+          到期时间
+        </label>
+        <input
+          type="date"
+          value={user.due_date || ''}
+          onChange={(e) => onChange({ ...user, due_date: e.target.value })}
+          style={{
+            width: '100%',
+            padding: '8px 12px',
+            border: '1px solid #404040',
+            borderRadius: '4px',
+            boxSizing: 'border-box',
+            background: '#1a1a1a',
+            color: '#ffffff',
+            fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif',
+            fontWeight: 'bold'
+          }}
+        />
+      </div>
+
+      <div>
+        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>
           逾期天数
         </label>
         <input
@@ -890,6 +924,50 @@ function BasicSettingsTab({
           type="number"
           value={user.overdue_amount || ''}
           onChange={(e) => onChange({ ...user, overdue_amount: parseFloat(e.target.value) || 0 })}
+          style={{
+            width: '100%',
+            padding: '8px 12px',
+            border: '1px solid #404040',
+            borderRadius: '4px',
+            boxSizing: 'border-box',
+            background: '#1a1a1a',
+            color: '#ffffff',
+            fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif',
+            fontWeight: 'bold'
+          }}
+        />
+      </div>
+
+      <div>
+        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>
+          违约金
+        </label>
+        <input
+          type="number"
+          value={user.penalty_fee ?? ''}
+          onChange={(e) => onChange({ ...user, penalty_fee: e.target.value === '' ? undefined : parseFloat(e.target.value) || 0 })}
+          style={{
+            width: '100%',
+            padding: '8px 12px',
+            border: '1px solid #404040',
+            borderRadius: '4px',
+            boxSizing: 'border-box',
+            background: '#1a1a1a',
+            color: '#ffffff',
+            fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif',
+            fontWeight: 'bold'
+          }}
+        />
+      </div>
+
+      <div>
+        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>
+          利息
+        </label>
+        <input
+          type="number"
+          value={user.interest ?? ''}
+          onChange={(e) => onChange({ ...user, interest: e.target.value === '' ? undefined : parseFloat(e.target.value) || 0 })}
           style={{
             width: '100%',
             padding: '8px 12px',

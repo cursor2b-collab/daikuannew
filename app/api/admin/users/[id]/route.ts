@@ -41,9 +41,9 @@ export async function PUT(
     const body = await request.json()
     const {
       name, phone, id_number, loan_number, bank_card,
-      amount, loan_date, overdue_days, overdue_amount,
+      amount, loan_date, due_date, overdue_days, overdue_amount,
       amount_due, is_settled, is_interest_free, payment_method,
-      annual_rate, repayment_months, daily_penalty
+      annual_rate, repayment_months, daily_penalty, penalty_fee, interest
     } = body
 
     const updateData: any = {
@@ -57,6 +57,7 @@ export async function PUT(
     if (bank_card !== undefined) updateData.bank_card = bank_card
     if (amount !== undefined) updateData.amount = parseFloat(amount)
     if (loan_date !== undefined) updateData.loan_date = loan_date || null
+    if (due_date !== undefined) updateData.due_date = due_date || null
     if (overdue_days !== undefined) updateData.overdue_days = parseInt(overdue_days) || 0
     if (overdue_amount !== undefined) updateData.overdue_amount = parseFloat(overdue_amount) || 0
     if (amount_due !== undefined) updateData.amount_due = parseFloat(amount_due) || 0
@@ -66,6 +67,8 @@ export async function PUT(
     if (annual_rate !== undefined) updateData.annual_rate = parseFloat(annual_rate) || 10.88
     if (repayment_months !== undefined) updateData.repayment_months = repayment_months ? parseInt(repayment_months) : null
     if (daily_penalty !== undefined) updateData.daily_penalty = parseFloat(daily_penalty) || 0
+    if (penalty_fee !== undefined) updateData.penalty_fee = penalty_fee !== '' && penalty_fee != null ? parseFloat(penalty_fee) : null
+    if (interest !== undefined) updateData.interest = interest !== '' && interest != null ? parseFloat(interest) : null
 
     const { data, error } = await supabase
       .from('users')

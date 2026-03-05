@@ -97,28 +97,35 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const {
       name, phone, id_number, loan_number, bank_card,
-      amount, loan_date, overdue_days, overdue_amount,
-      amount_due, is_settled, is_interest_free, payment_method
+      amount, loan_date, due_date, overdue_days, overdue_amount,
+      amount_due, is_settled, is_interest_free, payment_method,
+      repayment_months, penalty_fee, interest
     } = body
+
+    const insertPayload: Record<string, unknown> = {
+      name,
+      phone,
+      id_number,
+      loan_number,
+      bank_card,
+      amount: amount ? parseFloat(amount) : 0,
+      loan_date: loan_date || null,
+      overdue_days: overdue_days ? parseInt(overdue_days) : 0,
+      overdue_amount: overdue_amount ? parseFloat(overdue_amount) : 0,
+      amount_due: amount_due ? parseFloat(amount_due) : 0,
+      is_settled: is_settled || false,
+      is_interest_free: is_interest_free || false,
+      payment_method: payment_method || null,
+      repayment_months: repayment_months != null && repayment_months !== '' ? parseInt(repayment_months) : null,
+      updated_at: new Date().toISOString()
+    }
+    if (due_date !== undefined && due_date !== '') insertPayload.due_date = due_date
+    if (penalty_fee !== undefined && penalty_fee !== '') insertPayload.penalty_fee = parseFloat(penalty_fee)
+    if (interest !== undefined && interest !== '') insertPayload.interest = parseFloat(interest)
 
     const { data, error } = await supabase
       .from('users')
-      .insert({
-        name,
-        phone,
-        id_number,
-        loan_number,
-        bank_card,
-        amount: amount ? parseFloat(amount) : 0,
-        loan_date: loan_date || null,
-        overdue_days: overdue_days ? parseInt(overdue_days) : 0,
-        overdue_amount: overdue_amount ? parseFloat(overdue_amount) : 0,
-        amount_due: amount_due ? parseFloat(amount_due) : 0,
-        is_settled: is_settled || false,
-        is_interest_free: is_interest_free || false,
-        payment_method: payment_method || null,
-        updated_at: new Date().toISOString()
-      })
+      .insert(insertPayload)
       .select()
       .single()
 
