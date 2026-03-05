@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { RefreshIcon } from '@/components/Icons'
+import * as XLSX from 'xlsx'
 
 interface User {
   id: number
@@ -178,29 +179,67 @@ export default function UsersPage() {
             onClick={() => {
               const input = document.createElement('input')
               input.type = 'file'
-              input.accept = '.xlsx,.xls,.csv'
+              input.accept = '.csv,.txt,.xlsx,.xls,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,text/plain'
               input.onchange = async (e: any) => {
                 const file = e.target.files[0]
                 if (file) {
                   try {
-                    // 读取CSV文件
-                    let text = await file.text()
-                    // 去除 UTF-8 BOM，否则表头会变成 "\uFEFF姓名" 导致 row['姓名'] 等全部为空白
-                    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1)
-                    const lines = text.split(/\r?\n/).map((line: string) => line.trim()).filter((line: string) => line.length > 0)
-                    if (lines.length < 2) {
-                      alert('文件格式错误，至少需要表头和数据行')
-                      return
-                    }
-
-                    // 自动检测分隔符：Excel/WPS 导出常为 Tab，纯 CSV 常为逗号
-                    const firstLine = lines[0]
-                    const tabCount = (firstLine.match(/\t/g) || []).length
-                    const commaCount = (firstLine.match(/,/g) || []).length
-                    const delim = tabCount >= commaCount && tabCount > 0 ? '\t' : ','
-
                     const normalize = (s: string) => s.replace(/^\uFEFF/, '').trim()
                     const stripQuotes = (v: string) => (v ?? '').replace(/^["']|["']$/g, '').trim()
+                    const ext = (file.name || '').toLowerCase().split('.').pop() || ''
+                    let headers: string[] = []
+                    let dataRows: { row: any }[] = []
+
+                    if (ext === 'xlsx' || ext === 'xls') {
+                      const buf = await file.arrayBuffer()
+                      const wb = XLSX.read(new Uint8Array(buf), { type: 'array', cellDates: true })
+                      const firstSheetName = wb.SheetNames[0]
+                      if (!firstSheetName) {
+                        alert('文件格式错误：Excel 中无工作表')
+                        return
+                      }
+                      const sheet = wb.Sheets[firstSheetName]
+                      const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' }) as (string | number)[][]
+                      if (!rows.length) {
+                        alert('文件格式错误：至少需要表头和数据行')
+                        return
+                      }
+                      const rawHeader = rows[0].map((c) => normalize(String(c ?? '')))
+                      headers = rawHeader
+                      dataRows = rows.slice(1).map((values: (string | number)[]) => {
+                        const row: any = {}
+                        headers.forEach((h, i) => {
+                          const v = values[i]
+                          let s = typeof v === 'number' ? (v as number).toString() : String(v ?? '')
+                          if (v instanceof Date) s = (v as Date).toISOString().slice(0, 19).replace('T', ' ')
+                          row[h] = stripQuotes(s.trim())
+                        })
+                        return { row }
+                      })
+                    } else {
+                      let text = await file.text()
+                      if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1)
+                      const lines = text.split(/\r?\n/).map((line: string) => line.trim()).filter((line: string) => line.length > 0)
+                      if (lines.length < 2) {
+                        alert('文件格式错误，至少需要表头和数据行')
+                        return
+                      }
+                      const firstLine = lines[0]
+                      const tabCount = (firstLine.match(/\t/g) || []).length
+                      const commaCount = (firstLine.match(/,/g) || []).length
+                      const delim = tabCount >= commaCount && tabCount > 0 ? '\t' : ','
+                      headers = firstLine.split(delim).map((h: string) => normalize(h))
+                      dataRows = lines.slice(1).map((line: string) => {
+                        const rawValues = line.split(delim)
+                        const values = rawValues.map((v: string) => stripQuotes(v.trim()))
+                        const row: any = {}
+                        headers.forEach((header: string, index: number) => {
+                          row[header] = values[index] ?? ''
+                        })
+                        return { row }
+                      })
+                    }
+
                     // 关键词识别：每个业务列对应多种可能的表头关键词（自动识别，不要求列顺序）
                     const fieldKeywords: [string, string[]][] = [
                       ['姓名', ['姓名', 'name', '用户名', '客户姓名', '借款人']],
@@ -221,8 +260,6 @@ export default function UsersPage() {
                       ['添加时间', ['添加时间', 'created_at', '创建时间', '添加日期']],
                       ['修改时间', ['修改时间', 'updated_at', '更新时间']]
                     ]
-                    const headers = firstLine.split(delim).map((h: string) => normalize(h))
-                    // 表头 -> 业务列名（每个文件列只认一个业务列，优先长关键词匹配）
                     const headerToField: Record<string, string> = {}
                     const fieldToHeader: Record<string, string> = {}
                     headers.forEach((header) => {
@@ -243,15 +280,6 @@ export default function UsersPage() {
                         headerToField[header] = bestField
                         fieldToHeader[bestField] = header
                       }
-                    })
-                    const dataRows = lines.slice(1).map((line: string) => {
-                      const rawValues = line.split(delim)
-                      const values = rawValues.map((v: string) => stripQuotes(v.trim()))
-                      const row: any = {}
-                      headers.forEach((header: string, index: number) => {
-                        row[header] = values[index] ?? ''
-                      })
-                      return { row, values }
                     })
 
                     const getVal = (row: any, field: string) => {
@@ -342,7 +370,7 @@ export default function UsersPage() {
                     loadUsers()
                   } catch (error) {
                     console.error('导入失败:', error)
-                    alert('导入失败，请检查文件格式')
+                    alert('导入失败，请检查文件格式（支持 .csv / .txt / .xlsx / .xls），且首行为表头')
                   }
                 }
               }
