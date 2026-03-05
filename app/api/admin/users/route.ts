@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
       name, phone, id_number, loan_number, bank_card,
       amount, loan_date, due_date, overdue_days, overdue_amount,
       amount_due, is_settled, is_interest_free, payment_method,
-      repayment_months, penalty_fee, interest
+      repayment_months, penalty_fee, interest, gender, loan_term
     } = body
 
     const basePayload: Record<string, unknown> = {
@@ -105,6 +105,8 @@ export async function POST(request: NextRequest) {
     if (due_date !== undefined && due_date !== '') payloadWithOptional.due_date = due_date
     if (penalty_fee !== undefined && penalty_fee !== '') payloadWithOptional.penalty_fee = parseFloat(penalty_fee)
     if (interest !== undefined && interest !== '') payloadWithOptional.interest = parseFloat(interest)
+    if (gender !== undefined && gender !== '') payloadWithOptional.gender = gender
+    if (loan_term !== undefined && loan_term !== '' && loan_term != null) payloadWithOptional.loan_term = parseInt(loan_term)
 
     let result = await supabase.from('users').insert(payloadWithOptional).select().single()
     if (result.error && /column.*does not exist|undefined_column/i.test(String(result.error.message))) {

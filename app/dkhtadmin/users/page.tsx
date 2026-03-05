@@ -8,6 +8,7 @@ import * as XLSX from 'xlsx'
 interface User {
   id: number
   name?: string
+  gender?: string
   phone?: string
   id_number?: string
   loan_number?: string
@@ -26,6 +27,7 @@ interface User {
   updated_at?: string
   annual_rate?: number
   repayment_months?: number
+  loan_term?: number
   daily_penalty?: number
   penalty_fee?: number
   interest?: number
@@ -43,6 +45,14 @@ export default function UsersPage() {
   const [showEditModal, setShowEditModal] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [activeTab, setActiveTab] = useState<'basic' | 'payment' | 'installment'>('basic')
+  const [importProgress, setImportProgress] = useState<{
+    show: boolean
+    phase: 'parsing' | 'importing' | 'generating_codes' | 'done'
+    current: number
+    total: number
+    success: number
+    fail: number
+  }>({ show: false, phase: 'parsing', current: 0, total: 0, success: 0, fail: 0 })
 
   useEffect(() => {
     loadUsers()
@@ -184,6 +194,7 @@ export default function UsersPage() {
                 const file = e.target.files[0]
                 if (file) {
                   try {
+                    setImportProgress({ show: true, phase: 'parsing', current: 0, total: 0, success: 0, fail: 0 })
                     const normalize = (s: string) => s.replace(/^\uFEFF/, '').trim()
                     const stripQuotes = (v: string) => (v ?? '').replace(/^["']|["']$/g, '').trim()
                     const ext = (file.name || '').toLowerCase().split('.').pop() || ''
@@ -240,11 +251,12 @@ export default function UsersPage() {
                       })
                     }
 
-                    // 关键词识别：每个业务列对应多种可能的表头关键词（自动识别，不要求列顺序）
+                    // 关键词识别：支持两种常见格式（格式1：姓名,手机号,身份证号... 格式2：贷款单号,放款金额,期数,放款日期,到期日期,姓名,电话,身份证号,性别）
                     const fieldKeywords: [string, string[]][] = [
                       ['姓名', ['姓名', 'name', '用户名', '客户姓名', '借款人']],
-                      ['手机号', ['手机号', '手机', '手机号码', 'phone', '电话', '联系电话', '手机号']],
-                      ['身份证号', ['身份证号', '身份证', '身份证号码', 'id_number', '证件号', '身份证号']],
+                      ['手机号', ['手机号', '手机', '手机号码', 'phone', '电话', '联系电话']],
+                      ['身份证号', ['身份证号', '身份证', '身份证号码', 'id_number', '证件号']],
+                      ['性别', ['性别', 'gender']],
                       ['银行卡号', ['银行卡号', '银行卡', '银行账号', 'bank_card', '卡号', '收款账号']],
                       ['金额', ['金额', '借款金额', 'amount', '贷款金额', '本金', '放款金额']],
                       ['放款时间', ['放款时间', 'loan_date', '放款日', '借款时间', '放款日期']],
@@ -256,7 +268,7 @@ export default function UsersPage() {
                       ['利息', ['利息', 'interest', '利率']],
                       ['应还金额', ['应还金额', 'amount_due', '应还', '总还款', '应还本息']],
                       ['分期期数', ['分期期数', '分期', '期数']],
-                      ['放款编号', ['放款编号', 'loan_number', '编号', '合同编号', '借据号']],
+                      ['放款编号', ['放款编号', 'loan_number', '编号', '合同编号', '借据号', '贷款单号']],
                       ['添加时间', ['添加时间', 'created_at', '创建时间', '添加日期']],
                       ['修改时间', ['修改时间', 'updated_at', '更新时间']]
                     ]
@@ -303,21 +315,32 @@ export default function UsersPage() {
                       return isNaN(n) ? null : n
                     }
 
-                    // 批量创建用户
+                    const toDateOnly = (v: string) => {
+                      if (!v || typeof v !== 'string') return null
+                      let s = v.trim()
+                      if (s.includes(' ')) s = s.split(' ')[0]
+                      if (s.includes('/')) {
+                        const parts = s.split(/[/-]/)
+                        if (parts.length >= 3)
+                          return `${parts[0]}-${String(parts[1]).padStart(2, '0')}-${String(parts[2]).padStart(2, '0')}`
+                      }
+                      return s.length >= 10 ? s.slice(0, 10) : s
+                    }
+
+                    const totalRows = dataRows.length
+                    setImportProgress({ show: true, phase: 'importing', current: 0, total: totalRows, success: 0, fail: 0 })
+                    await new Promise((r) => setTimeout(r, 50))
+
                     let successCount = 0
                     let failCount = 0
-                    for (const { row } of dataRows) {
+                    for (let i = 0; i < dataRows.length; i++) {
+                      const { row } = dataRows[i]
                       try {
-                        const toDateOnly = (v: string) => {
-                          if (!v || typeof v !== 'string') return null
-                          const s = v.trim()
-                          if (s.includes(' ')) return s.split(' ')[0]
-                          return s.length >= 10 ? s.slice(0, 10) : s
-                        }
                         const userData: any = {
                           name: getVal(row, '姓名'),
                           phone: getVal(row, '手机号'),
                           id_number: getVal(row, '身份证号'),
+                          gender: getVal(row, '性别') || undefined,
                           loan_number: getVal(row, '放款编号'),
                           bank_card: getVal(row, '银行卡号'),
                           amount: getNum(row, '金额') || 0,
@@ -333,12 +356,19 @@ export default function UsersPage() {
                           is_interest_free: false
                         }
 
-                        const response = await fetch('/api/admin/users', {
+                        let response = await fetch('/api/admin/users', {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify(userData)
                         })
-
+                        if ((response.status === 429 || response.status === 503) && response.ok === false) {
+                          await new Promise((r) => setTimeout(r, 1500))
+                          response = await fetch('/api/admin/users', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(userData)
+                          })
+                        }
                         const result = await response.json()
                         if (result.code === 200) {
                           successCount++
@@ -349,15 +379,17 @@ export default function UsersPage() {
                         failCount++
                         console.error('导入用户失败:', error)
                       }
+                      setImportProgress((p) => ({ ...p, current: i + 1, success: successCount, fail: failCount }))
+                      await new Promise((r) => setTimeout(r, 0))
+                      if (i < dataRows.length - 1) {
+                        await new Promise((r) => setTimeout(r, 100))
+                      }
                     }
 
-                    alert(`导入完成！成功：${successCount}，失败：${failCount}`)
-                    
-                    // 自动生成验证码
+                    setImportProgress((p) => ({ ...p, phase: 'generating_codes' }))
+                    await new Promise((r) => setTimeout(r, 80))
                     try {
-                      const codeResponse = await fetch('/api/admin/generate_codes', {
-                        method: 'POST'
-                      })
+                      const codeResponse = await fetch('/api/admin/generate_codes', { method: 'POST' })
                       const codeResult = await codeResponse.json()
                       if (codeResult.code === 200) {
                         console.log(`已生成 ${codeResult.data.generated} 个验证码`)
@@ -366,10 +398,11 @@ export default function UsersPage() {
                       console.error('生成验证码失败:', error)
                     }
 
-                    // 刷新列表
+                    setImportProgress((p) => ({ ...p, phase: 'done' }))
                     loadUsers()
                   } catch (error) {
                     console.error('导入失败:', error)
+                    setImportProgress((p) => ({ ...p, show: false }))
                     alert('导入失败，请检查文件格式（支持 .csv / .txt / .xlsx / .xls），且首行为表头')
                   }
                 }
@@ -538,6 +571,7 @@ export default function UsersPage() {
               </th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>编号 ↕</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', minWidth: '80px' }}>姓名 ↕</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>性别 ↕</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>手机号 ↕</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>身份证号 ↕</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>银行卡号 ↕</th>
@@ -545,6 +579,7 @@ export default function UsersPage() {
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>放款时间 ↕</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>到期时间 ↕</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>借款期数 ↕</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>贷款期数 ↕</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>逾期天数 ↕</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>逾期金额 ↕</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>违约金 ↕</th>
@@ -560,13 +595,13 @@ export default function UsersPage() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={20} style={{ padding: '40px', textAlign: 'center', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>
+                <td colSpan={22} style={{ padding: '40px', textAlign: 'center', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>
                   加载中...
                 </td>
               </tr>
             ) : users.length === 0 ? (
               <tr>
-                <td colSpan={20} style={{ padding: '40px', textAlign: 'center', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>
+                <td colSpan={22} style={{ padding: '40px', textAlign: 'center', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>
                   暂无数据
                 </td>
               </tr>
@@ -578,6 +613,7 @@ export default function UsersPage() {
                   </td>
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{user.id}</td>
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold', whiteSpace: 'normal', wordBreak: 'break-all' }} title={user.name || ''}>{user.name || '-'}</td>
+                  <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{user.gender || '-'}</td>
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{maskString(user.phone, 3, 3) || '-'}</td>
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{maskString(user.id_number, 4, 4) || '-'}</td>
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{maskString(user.bank_card, 4, 4) || '-'}</td>
@@ -585,6 +621,7 @@ export default function UsersPage() {
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{user.loan_date || '-'}</td>
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{user.due_date || '-'}</td>
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{user.repayment_months ?? '-'}</td>
+                  <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{user.loan_term ?? user.repayment_months ?? '-'}</td>
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{user.overdue_days ?? '-'}</td>
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{formatAmount(user.overdue_amount)}</td>
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{formatAmount(user.penalty_fee)}</td>
@@ -701,6 +738,195 @@ export default function UsersPage() {
           onTabChange={setActiveTab}
         />
       )}
+
+      {/* 导入进度弹窗 */}
+      {importProgress.show && (
+        <ImportProgressModal
+          phase={importProgress.phase}
+          current={importProgress.current}
+          total={importProgress.total}
+          success={importProgress.success}
+          fail={importProgress.fail}
+          onClose={() => setImportProgress((p) => ({ ...p, show: false }))}
+        />
+      )}
+    </div>
+  )
+}
+
+// 导入进度弹窗（实时进度条 + 三格打勾动画）
+function ImportProgressModal({
+  phase,
+  current,
+  total,
+  success,
+  fail,
+  onClose
+}: {
+  phase: 'parsing' | 'importing' | 'generating_codes' | 'done'
+  current: number
+  total: number
+  success: number
+  fail: number
+  onClose: () => void
+}) {
+  const percent = phase === 'done' ? 100 : total > 0 ? Math.min(100, (current / total) * 100) : 0
+  const phaseText =
+    phase === 'parsing'
+      ? '正在解析文件…'
+      : phase === 'importing'
+        ? `正在导入 ${current}/${total}`
+        : phase === 'generating_codes'
+          ? '正在生成验证码…'
+          : '导入完成'
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0,0,0,0.6)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 10001
+      }}
+    >
+      <div
+        style={{
+          background: '#1e1e1e',
+          borderRadius: '12px',
+          padding: '28px 32px',
+          minWidth: '360px',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+          border: '1px solid #404040'
+        }}
+      >
+        <div style={{ color: '#fff', fontWeight: 'bold', marginBottom: '16px', fontFamily: 'PingFang SC, sans-serif' }}>
+          {phaseText}
+        </div>
+        <div
+          style={{
+            position: 'relative',
+            background: '#535353',
+            borderRadius: '1em',
+            height: '1em',
+            width: '100%',
+            maxWidth: '330px',
+            overflow: 'hidden'
+          }}
+        >
+          <div
+            style={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              height: '100%',
+              width: `${percent}%`,
+              background: 'rgb(0, 205, 0)',
+              borderRadius: '1em',
+              transition: 'width 0.2s ease-out'
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              left: 0,
+              top: '-4px',
+              zIndex: 2,
+              display: 'flex',
+              width: '100%',
+              maxWidth: '330px',
+              justifyContent: 'space-between',
+              padding: '0 0',
+              pointerEvents: 'none'
+            }}
+          >
+            <div style={{ width: '1.5em', height: '1.5em' }} />
+            <div
+              style={{
+                width: '1.5em',
+                height: '1.5em',
+                borderRadius: '1em',
+                padding: '3px',
+                backgroundColor: percent >= 33 ? 'rgb(0, 205, 0)' : '#535353',
+                transform: 'scale(0.95)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'background-color 0.2s'
+              }}
+            >
+              <svg stroke="white" strokeWidth={2} viewBox="0 0 24 24" fill="none" style={{ width: '100%', height: '100%' }}>
+                <path d="m4.5 12.75 6 6 9-13.5" strokeLinejoin="round" strokeLinecap="round" />
+              </svg>
+            </div>
+            <div
+              style={{
+                width: '1.5em',
+                height: '1.5em',
+                borderRadius: '1em',
+                padding: '3px',
+                backgroundColor: percent >= 66 ? 'rgb(0, 205, 0)' : '#535353',
+                transform: 'scale(0.95)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'background-color 0.2s'
+              }}
+            >
+              <svg stroke="white" strokeWidth={2} viewBox="0 0 24 24" fill="none" style={{ width: '100%', height: '100%' }}>
+                <path d="m4.5 12.75 6 6 9-13.5" strokeLinejoin="round" strokeLinecap="round" />
+              </svg>
+            </div>
+            <div
+              style={{
+                width: '1.5em',
+                height: '1.5em',
+                borderRadius: '1em',
+                padding: '3px',
+                backgroundColor: percent >= 100 ? 'rgb(0, 205, 0)' : '#535353',
+                transform: 'scale(0.95)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'background-color 0.2s'
+              }}
+            >
+              <svg stroke="white" strokeWidth={2} viewBox="0 0 24 24" fill="none" style={{ width: '100%', height: '100%' }}>
+                <path d="m4.5 12.75 6 6 9-13.5" strokeLinejoin="round" strokeLinecap="round" />
+              </svg>
+            </div>
+          </div>
+        </div>
+        {(phase === 'importing' || phase === 'done') && total > 0 && (
+          <div style={{ marginTop: '12px', color: '#aaa', fontSize: '13px', fontFamily: 'PingFang SC, sans-serif' }}>
+            成功 {success}，失败 {fail}
+          </div>
+        )}
+        {phase === 'done' && (
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              marginTop: '16px',
+              padding: '8px 20px',
+              background: '#00cd00',
+              color: '#000',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              fontFamily: 'PingFang SC, sans-serif'
+            }}
+          >
+            关闭
+          </button>
+        )}
+      </div>
     </div>
   )
 }
@@ -879,6 +1105,32 @@ function BasicSettingsTab({
 
       <div>
         <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>
+          性别
+        </label>
+        <select
+          value={user.gender || ''}
+          onChange={(e) => onChange({ ...user, gender: e.target.value || undefined })}
+          style={{
+            width: '100%',
+            padding: '8px 12px',
+            border: '1px solid #404040',
+            borderRadius: '4px',
+            boxSizing: 'border-box',
+            background: '#1a1a1a',
+            color: '#ffffff',
+            fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif',
+            fontWeight: 'bold'
+          }}
+        >
+          <option value="">请选择</option>
+          <option value="男">男</option>
+          <option value="女">女</option>
+          <option value="其他">其他</option>
+        </select>
+      </div>
+
+      <div>
+        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>
           手机号码
         </label>
         <input
@@ -1017,6 +1269,30 @@ function BasicSettingsTab({
           type="date"
           value={user.due_date || ''}
           onChange={(e) => onChange({ ...user, due_date: e.target.value })}
+          style={{
+            width: '100%',
+            padding: '8px 12px',
+            border: '1px solid #404040',
+            borderRadius: '4px',
+            boxSizing: 'border-box',
+            background: '#1a1a1a',
+            color: '#ffffff',
+            fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif',
+            fontWeight: 'bold'
+          }}
+        />
+      </div>
+
+      <div>
+        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>
+          贷款期数（月）
+        </label>
+        <input
+          type="number"
+          min="0"
+          placeholder="例如：12"
+          value={user.loan_term ?? ''}
+          onChange={(e) => onChange({ ...user, loan_term: e.target.value ? parseInt(e.target.value) : undefined })}
           style={{
             width: '100%',
             padding: '8px 12px',

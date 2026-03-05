@@ -20,7 +20,7 @@ export async function PUT(
       name, phone, id_number, loan_number, bank_card,
       amount, loan_date, due_date, overdue_days, overdue_amount,
       amount_due, is_settled, is_interest_free, payment_method,
-      annual_rate, repayment_months, daily_penalty, penalty_fee, interest
+      annual_rate, repayment_months, daily_penalty, penalty_fee, interest, gender, loan_term
     } = body
 
     const updateData: any = {
@@ -46,6 +46,8 @@ export async function PUT(
     if (daily_penalty !== undefined) updateData.daily_penalty = parseFloat(daily_penalty) || 0
     if (penalty_fee !== undefined) updateData.penalty_fee = penalty_fee !== '' && penalty_fee != null ? parseFloat(penalty_fee) : null
     if (interest !== undefined) updateData.interest = interest !== '' && interest != null ? parseFloat(interest) : null
+    if (gender !== undefined) updateData.gender = gender
+    if (loan_term !== undefined) updateData.loan_term = loan_term !== '' && loan_term != null ? parseInt(loan_term) : null
 
     const { data, error } = await supabase
       .from('users')
