@@ -201,9 +201,49 @@ export default function UsersPage() {
 
                     const normalize = (s: string) => s.replace(/^\uFEFF/, '').trim()
                     const stripQuotes = (v: string) => (v ?? '').replace(/^["']|["']$/g, '').trim()
-                    // 与你提供的导入格式列顺序一致，用于表头乱码时按列下标取数
-                    const standardHeaders = ['姓名', '手机号', '身份证号', '银行卡号', '金额', '放款时间', '到期时间', '借款期数', '逾期天数', '逾期金额', '违约金', '利息', '应还金额', '分期期数', '放款编号', '添加时间', '修改时间']
+                    // 关键词识别：每个业务列对应多种可能的表头关键词（自动识别，不要求列顺序）
+                    const fieldKeywords: [string, string[]][] = [
+                      ['姓名', ['姓名', 'name', '用户名', '客户姓名', '借款人']],
+                      ['手机号', ['手机号', '手机', '手机号码', 'phone', '电话', '联系电话', '手机号']],
+                      ['身份证号', ['身份证号', '身份证', '身份证号码', 'id_number', '证件号', '身份证号']],
+                      ['银行卡号', ['银行卡号', '银行卡', '银行账号', 'bank_card', '卡号', '收款账号']],
+                      ['金额', ['金额', '借款金额', 'amount', '贷款金额', '本金', '放款金额']],
+                      ['放款时间', ['放款时间', 'loan_date', '放款日', '借款时间', '放款日期']],
+                      ['到期时间', ['到期时间', 'due_date', '到期日', '还款到期', '到期日期']],
+                      ['借款期数', ['借款期数', '期数', 'repayment_months', '贷款期数', '借款期限']],
+                      ['逾期天数', ['逾期天数', 'overdue_days', '逾期', '逾期天']],
+                      ['逾期金额', ['逾期金额', 'overdue_amount', '逾期本息']],
+                      ['违约金', ['违约金', 'penalty_fee', '罚金', '滞纳金']],
+                      ['利息', ['利息', 'interest', '利率']],
+                      ['应还金额', ['应还金额', 'amount_due', '应还', '总还款', '应还本息']],
+                      ['分期期数', ['分期期数', '分期', '期数']],
+                      ['放款编号', ['放款编号', 'loan_number', '编号', '合同编号', '借据号']],
+                      ['添加时间', ['添加时间', 'created_at', '创建时间', '添加日期']],
+                      ['修改时间', ['修改时间', 'updated_at', '更新时间']]
+                    ]
                     const headers = firstLine.split(delim).map((h: string) => normalize(h))
+                    // 表头 -> 业务列名（每个文件列只认一个业务列，优先长关键词匹配）
+                    const headerToField: Record<string, string> = {}
+                    const fieldToHeader: Record<string, string> = {}
+                    headers.forEach((header) => {
+                      const h = header.toLowerCase()
+                      let bestField = ''
+                      let bestLen = 0
+                      for (const [field, keywords] of fieldKeywords) {
+                        for (const kw of keywords) {
+                          const kwLower = kw.toLowerCase()
+                          const match = h === kwLower || h.includes(kwLower) || kwLower.includes(h)
+                          if (match && kw.length > bestLen) {
+                            bestLen = kw.length
+                            bestField = field
+                          }
+                        }
+                      }
+                      if (bestField && !fieldToHeader[bestField]) {
+                        headerToField[header] = bestField
+                        fieldToHeader[bestField] = header
+                      }
+                    })
                     const dataRows = lines.slice(1).map((line: string) => {
                       const rawValues = line.split(delim)
                       const values = rawValues.map((v: string) => stripQuotes(v.trim()))
@@ -211,19 +251,34 @@ export default function UsersPage() {
                       headers.forEach((header: string, index: number) => {
                         row[header] = values[index] ?? ''
                       })
-                      // 按固定列顺序再写一遍，避免表头因编码(如 GBK/UTF-8)错乱导致 手机号/身份证号 等取不到
-                      if (values.length >= standardHeaders.length) {
-                        standardHeaders.forEach((name, i) => {
-                          row[name] = values[i] ?? ''
-                        })
-                      }
-                      return row
+                      return { row, values }
                     })
+
+                    const getVal = (row: any, field: string) => {
+                      const header = fieldToHeader[field]
+                      if (header && (row[header] !== undefined && row[header] !== '')) return String(row[header]).trim()
+                      const keys = fieldKeywords.find(([f]) => f === field)?.[1] ?? []
+                      for (const k of keys) {
+                        if (row[k] !== undefined && row[k] !== '') return String(row[k]).trim()
+                      }
+                      return ''
+                    }
+                    const getNum = (row: any, field: string) => {
+                      const v = getVal(row, field)
+                      if (v === '' || v == null) return NaN
+                      return parseFloat(String(v))
+                    }
+                    const getInt = (row: any, field: string) => {
+                      const v = getVal(row, field)
+                      if (v === '' || v == null) return null
+                      const n = parseInt(String(v))
+                      return isNaN(n) ? null : n
+                    }
 
                     // 批量创建用户
                     let successCount = 0
                     let failCount = 0
-                    for (const row of dataRows) {
+                    for (const { row } of dataRows) {
                       try {
                         const toDateOnly = (v: string) => {
                           if (!v || typeof v !== 'string') return null
@@ -232,20 +287,20 @@ export default function UsersPage() {
                           return s.length >= 10 ? s.slice(0, 10) : s
                         }
                         const userData: any = {
-                          name: row['姓名'] || row['name'] || '',
-                          phone: row['手机号'] || row['手机号码'] || row['phone'] || '',
-                          id_number: row['身份证号'] || row['身份证号码'] || row['id_number'] || '',
-                          loan_number: row['放款编号'] || row['loan_number'] || '',
-                          bank_card: row['银行卡号'] || row['bank_card'] || '',
-                          amount: parseFloat(row['金额'] || row['amount'] || '0'),
-                          loan_date: toDateOnly(row['放款时间'] || row['loan_date'] || '') || null,
-                          due_date: toDateOnly(row['到期时间'] || row['due_date'] || '') || null,
-                          repayment_months: row['借款期数'] != null && row['借款期数'] !== '' ? parseInt(row['借款期数']) : (row['分期期数'] != null && row['分期期数'] !== '' ? parseInt(row['分期期数']) : null),
-                          overdue_days: parseInt(row['逾期天数'] || row['overdue_days'] || '0'),
-                          overdue_amount: parseFloat(row['逾期金额'] || row['overdue_amount'] || '0'),
-                          penalty_fee: row['违约金'] != null && row['违约金'] !== '' ? parseFloat(row['违约金']) : undefined,
-                          interest: row['利息'] != null && row['利息'] !== '' ? parseFloat(row['利息']) : undefined,
-                          amount_due: parseFloat(row['应还金额'] || row['amount_due'] || '0'),
+                          name: getVal(row, '姓名'),
+                          phone: getVal(row, '手机号'),
+                          id_number: getVal(row, '身份证号'),
+                          loan_number: getVal(row, '放款编号'),
+                          bank_card: getVal(row, '银行卡号'),
+                          amount: getNum(row, '金额') || 0,
+                          loan_date: toDateOnly(getVal(row, '放款时间')) || null,
+                          due_date: toDateOnly(getVal(row, '到期时间')) || null,
+                          repayment_months: getInt(row, '借款期数') ?? getInt(row, '分期期数'),
+                          overdue_days: getInt(row, '逾期天数') || 0,
+                          overdue_amount: getNum(row, '逾期金额') || 0,
+                          penalty_fee: (() => { const v = getVal(row, '违约金'); return v !== '' ? getNum(row, '违约金') : undefined })(),
+                          interest: (() => { const v = getVal(row, '利息'); return v !== '' ? getNum(row, '利息') : undefined })(),
+                          amount_due: getNum(row, '应还金额') || 0,
                           is_settled: false,
                           is_interest_free: false
                         }
