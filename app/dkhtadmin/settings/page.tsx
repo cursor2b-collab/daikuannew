@@ -17,7 +17,7 @@ export default function SettingsPage() {
   } | null>(null)
   const [dedupLoading, setDedupLoading] = useState(false)
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([])
-  const [customerServiceUrl, setCustomerServiceUrl] = useState('https://kbn.dot01ui.cfd/chat/index?channelId=817bc25124614b89afe65ecf4533a94a')
+  const [customerServiceUrl, setCustomerServiceUrl] = useState('https://kefu')
   const [telegramBotToken, setTelegramBotToken] = useState('')
   const [telegramChatId, setTelegramChatId] = useState('')
   const [smsbaoUsername, setSmsbaoUsername] = useState('')
@@ -80,7 +80,7 @@ export default function SettingsPage() {
       const serviceResult = await serviceResponse.json()
 
       if (serviceResult.code === 200 && serviceResult.data?.setting_value) {
-        setCustomerServiceUrl(serviceResult.data.setting_value || 'https://kbn.dot01ui.cfd/chat/index?channelId=817bc25124614b89afe65ecf4533a94a')
+        setCustomerServiceUrl(serviceResult.data.setting_value || 'https://kefu')
       }
 
       // 加载 Telegram 配置
@@ -443,7 +443,7 @@ export default function SettingsPage() {
                   type="text"
                   value={customerServiceUrl}
                   onChange={(e) => setCustomerServiceUrl(e.target.value)}
-                  placeholder="请输入借款咨询/在线客服链接，例如：https://kbn.dot01ui.cfd/chat/index?channelId=817bc25124614b89afe65ecf4533a94a"
+                  placeholder="请输入借款咨询/在线客服链接，例如：https://kefu"
                   style={{
                     width: '100%',
                     padding: '8px 12px',

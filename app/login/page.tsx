@@ -94,7 +94,9 @@ export default function LoginPage() {
       if (result.code === 200) {
         const smsNotConfigured = result.data?.code != null
         if (smsNotConfigured) {
-          alert('请联系客服获取验证码')
+          // 未配置短信接口：自动填入验证码并提示
+          setCode(String(result.data.code))
+          alert('已验证本机，已填入验证码，请点立即登录')
           loadCaptcha()
         } else {
           alert('验证码发送成功')

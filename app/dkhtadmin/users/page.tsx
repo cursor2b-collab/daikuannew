@@ -180,20 +180,23 @@ export default function UsersPage() {
                 if (file) {
                   try {
                     // 读取CSV文件
-                    const text = await file.text()
-                    const lines = text.split('\n').filter((line: string) => line.trim().length > 0)
+                    let text = await file.text()
+                    // 去除 UTF-8 BOM，否则表头会变成 "\uFEFF姓名" 导致 row['姓名'] 等全部为空白
+                    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1)
+                    const lines = text.split(/\r?\n/).map((line: string) => line.trim()).filter((line: string) => line.length > 0)
                     if (lines.length < 2) {
                       alert('文件格式错误，至少需要表头和数据行')
                       return
                     }
 
-                    // 解析CSV（简单解析，实际应该使用CSV解析库）
-                    const headers = lines[0].split(',').map((h: string) => h.trim())
+                    // 解析CSV：表头与每行按逗号分割，并统一去除首尾空白和 BOM
+                    const normalize = (s: string) => s.replace(/^\uFEFF/, '').trim()
+                    const headers = lines[0].split(',').map((h: string) => normalize(h))
                     const dataRows = lines.slice(1).map((line: string) => {
                       const values = line.split(',').map((v: string) => v.trim())
                       const row: any = {}
                       headers.forEach((header: string, index: number) => {
-                        row[header] = values[index] || ''
+                        row[header] = values[index] ?? ''
                       })
                       return row
                     })
@@ -389,7 +392,7 @@ export default function UsersPage() {
                 <input type="checkbox" />
               </th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>编号 ↕</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>姓名 ↕</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', minWidth: '80px' }}>姓名 ↕</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>手机号码 ↕</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>身份证号码 ↕</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>放款编号 ↕</th>
@@ -425,7 +428,7 @@ export default function UsersPage() {
                     <input type="checkbox" />
                   </td>
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{user.id}</td>
-                  <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{maskString(user.name, 0, 1) || '-'}</td>
+                  <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold', whiteSpace: 'normal', wordBreak: 'break-all' }} title={user.name || ''}>{user.name || '-'}</td>
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{maskString(user.phone, 3, 3) || '-'}</td>
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{maskString(user.id_number, 4, 4) || '-'}</td>
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{user.loan_number || '-'}</td>

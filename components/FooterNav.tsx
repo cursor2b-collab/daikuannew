@@ -13,7 +13,7 @@ interface NavItem {
 
 export default function FooterNav() {
   const pathname = usePathname()
-  const [customerServiceUrl, setCustomerServiceUrl] = useState('https://kbn.dot01ui.cfd/chat/index?channelId=817bc25124614b89afe65ecf4533a94a')
+  const [customerServiceUrl, setCustomerServiceUrl] = useState('https://kefu')
 
   useEffect(() => {
     fetch('/api/get_customer_service_url', { cache: 'no-store' })

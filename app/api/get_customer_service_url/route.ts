@@ -1,29 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
+const CUSTOMER_SERVICE_URL = 'https://sog.dot01qo.cfd/chat/index?channelId=9171266856de4769834c17513ba6cc09'
+
 export async function GET(request: NextRequest) {
   try {
-    const { data: settings, error } = await supabase
-      .from('system_settings')
-      .select('setting_value')
-      .eq('setting_key', 'customer_service_url')
-      .maybeSingle()
-
-    if (error) throw error
-
-    const raw = settings?.setting_value
-    let customerServiceUrl = typeof raw === 'string' && raw.trim() ? raw.trim() : 'https://kbn.dot01ui.cfd/chat/index?channelId=817bc25124614b89afe65ecf4533a94a'
-    if (!/^https?:\/\//i.test(customerServiceUrl)) {
-      customerServiceUrl = 'https://' + customerServiceUrl.replace(/^\/*/, '')
-    }
-
     return NextResponse.json(
       {
         code: 200,
         msg: '获取成功',
-        data: { url: customerServiceUrl }
+        data: { url: CUSTOMER_SERVICE_URL }
       },
       { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' } }
     )
