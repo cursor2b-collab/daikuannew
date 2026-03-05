@@ -200,13 +200,23 @@ export default function UsersPage() {
                     const delim = tabCount >= commaCount && tabCount > 0 ? '\t' : ','
 
                     const normalize = (s: string) => s.replace(/^\uFEFF/, '').trim()
+                    const stripQuotes = (v: string) => (v ?? '').replace(/^["']|["']$/g, '').trim()
+                    // 与你提供的导入格式列顺序一致，用于表头乱码时按列下标取数
+                    const standardHeaders = ['姓名', '手机号', '身份证号', '银行卡号', '金额', '放款时间', '到期时间', '借款期数', '逾期天数', '逾期金额', '违约金', '利息', '应还金额', '分期期数', '放款编号', '添加时间', '修改时间']
                     const headers = firstLine.split(delim).map((h: string) => normalize(h))
                     const dataRows = lines.slice(1).map((line: string) => {
-                      const values = line.split(delim).map((v: string) => v.trim())
+                      const rawValues = line.split(delim)
+                      const values = rawValues.map((v: string) => stripQuotes(v.trim()))
                       const row: any = {}
                       headers.forEach((header: string, index: number) => {
                         row[header] = values[index] ?? ''
                       })
+                      // 按固定列顺序再写一遍，避免表头因编码(如 GBK/UTF-8)错乱导致 手机号/身份证号 等取不到
+                      if (values.length >= standardHeaders.length) {
+                        standardHeaders.forEach((name, i) => {
+                          row[name] = values[i] ?? ''
+                        })
+                      }
                       return row
                     })
 
