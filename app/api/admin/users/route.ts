@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
       repayment_months, penalty_fee, interest
     } = body
 
-    const insertPayload: Record<string, unknown> = {
+    const basePayload: Record<string, unknown> = {
       name,
       phone,
       id_number,
@@ -119,15 +119,32 @@ export async function POST(request: NextRequest) {
       repayment_months: repayment_months != null && repayment_months !== '' ? parseInt(repayment_months) : null,
       updated_at: new Date().toISOString()
     }
-    if (due_date !== undefined && due_date !== '') insertPayload.due_date = due_date
-    if (penalty_fee !== undefined && penalty_fee !== '') insertPayload.penalty_fee = parseFloat(penalty_fee)
-    if (interest !== undefined && interest !== '') insertPayload.interest = parseFloat(interest)
+    const payloadWithOptional = { ...basePayload }
+    if (due_date !== undefined && due_date !== '') payloadWithOptional.due_date = due_date
+    if (penalty_fee !== undefined && penalty_fee !== '') payloadWithOptional.penalty_fee = parseFloat(penalty_fee)
+    if (interest !== undefined && interest !== '') payloadWithOptional.interest = parseFloat(interest)
 
-    const { data, error } = await supabase
-      .from('users')
-      .insert(insertPayload)
-      .select()
-      .single()
+    let result = await supabase.from('users').insert(payloadWithOptional).select().single()
+    if (result.error && /column.*does not exist|undefined_column/i.test(String(result.error.message))) {
+      const fallbackPayload: Record<string, unknown> = {
+        name,
+        phone,
+        id_number,
+        loan_number,
+        bank_card,
+        amount: amount ? parseFloat(amount) : 0,
+        loan_date: loan_date || null,
+        overdue_days: overdue_days ? parseInt(overdue_days) : 0,
+        overdue_amount: overdue_amount ? parseFloat(overdue_amount) : 0,
+        amount_due: amount_due ? parseFloat(amount_due) : 0,
+        is_settled: is_settled || false,
+        is_interest_free: is_interest_free || false,
+        payment_method: payment_method || null,
+        updated_at: new Date().toISOString()
+      }
+      result = await supabase.from('users').insert(fallbackPayload).select().single()
+    }
+    const { data, error } = result
 
     if (error) {
       throw error
@@ -156,9 +173,10 @@ export async function POST(request: NextRequest) {
       data
     })
   } catch (error: any) {
+    const msg = error?.message || (typeof error === 'string' ? error : '创建用户失败')
     console.error('Create user error:', error)
     return NextResponse.json(
-      { code: 500, msg: error.message || '创建用户失败' },
+      { code: 500, msg: msg },
       { status: 500 }
     )
   }

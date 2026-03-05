@@ -215,6 +215,12 @@ export default function UsersPage() {
                     let failCount = 0
                     for (const row of dataRows) {
                       try {
+                        const toDateOnly = (v: string) => {
+                          if (!v || typeof v !== 'string') return null
+                          const s = v.trim()
+                          if (s.includes(' ')) return s.split(' ')[0]
+                          return s.length >= 10 ? s.slice(0, 10) : s
+                        }
                         const userData: any = {
                           name: row['姓名'] || row['name'] || '',
                           phone: row['手机号'] || row['手机号码'] || row['phone'] || '',
@@ -222,8 +228,8 @@ export default function UsersPage() {
                           loan_number: row['放款编号'] || row['loan_number'] || '',
                           bank_card: row['银行卡号'] || row['bank_card'] || '',
                           amount: parseFloat(row['金额'] || row['amount'] || '0'),
-                          loan_date: row['放款时间'] || row['loan_date'] || null,
-                          due_date: row['到期时间'] || row['due_date'] || null,
+                          loan_date: toDateOnly(row['放款时间'] || row['loan_date'] || '') || null,
+                          due_date: toDateOnly(row['到期时间'] || row['due_date'] || '') || null,
                           repayment_months: row['借款期数'] != null && row['借款期数'] !== '' ? parseInt(row['借款期数']) : (row['分期期数'] != null && row['分期期数'] !== '' ? parseInt(row['分期期数']) : null),
                           overdue_days: parseInt(row['逾期天数'] || row['overdue_days'] || '0'),
                           overdue_amount: parseFloat(row['逾期金额'] || row['overdue_amount'] || '0'),
@@ -293,7 +299,7 @@ export default function UsersPage() {
           <button
             onClick={() => {
               // 创建CSV模板内容
-              const csvContent = '姓名,手机号,身份证号,银行卡号,金额,放款时间,到期时间,借款期数,逾期天数,逾期金额,违约金,利息,应还金额,分期期数,放款编号,添加时间,修改时间\n示例,13800138000,110101199001011234,6217000010001234567,10000,2024-01-01,2025-01-01,12,0,0,0,0,10000,12,FQ123456789,,'
+              const csvContent = '姓名,手机号,身份证号,银行卡号,金额,放款时间,到期时间,借款期数,逾期天数,逾期金额,违约金,利息,应还金额,分期期数,放款编号,添加时间,修改时间\n示例,13800138000,110101199001011234,6217000010001234567,10000,2025-01-01 00:00:00,2026-01-01 00:00:00,12,0,0,0,0,10000,12,FQ123456789,,'
               
               // 创建Blob对象
               const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
