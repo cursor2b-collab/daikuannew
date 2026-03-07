@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
       const refreshToken = sessionData.refresh_token
       if (refreshToken) {
         const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession({ refresh_token: refreshToken })
-        if (!refreshError && refreshData?.session) {
+        if (!refreshError && refreshData?.session && refreshData?.user) {
           const payload = {
             access_token: refreshData.session.access_token,
             refresh_token: refreshData.session.refresh_token ?? '',
