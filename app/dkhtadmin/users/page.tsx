@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { RefreshIcon } from '@/components/Icons'
 import * as XLSX from 'xlsx'
@@ -53,10 +53,20 @@ export default function UsersPage() {
     success: number
     fail: number
   }>({ show: false, phase: 'parsing', current: 0, total: 0, success: 0, fail: 0 })
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const headerCheckRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     loadUsers()
   }, [page, search, isSettledFilter])
+
+  const pageIds = users.map((u) => u.id)
+  const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selectedIds.has(id))
+  const somePageSelected = pageIds.some((id) => selectedIds.has(id))
+  useEffect(() => {
+    const el = headerCheckRef.current
+    if (el) el.indeterminate = somePageSelected && !allPageSelected
+  }, [somePageSelected, allPageSelected])
 
   const loadUsers = async () => {
     setLoading(true)
@@ -100,6 +110,11 @@ export default function UsersPage() {
 
       if (result.code === 200) {
         alert('删除成功')
+        setSelectedIds((prev) => {
+          const next = new Set(prev)
+          next.delete(id)
+          return next
+        })
         loadUsers()
       } else {
         alert(result.msg || '删除失败')
@@ -107,6 +122,48 @@ export default function UsersPage() {
     } catch (error) {
       alert('删除失败')
     }
+  }
+
+  const handleToggleAll = () => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (allPageSelected) {
+        pageIds.forEach((id) => next.delete(id))
+      } else {
+        pageIds.forEach((id) => next.add(id))
+      }
+      return next
+    })
+  }
+
+  const handleToggleOne = (id: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return
+    if (!confirm(`确定要删除已选中的 ${selectedIds.size} 条记录吗？此操作不可恢复。`)) return
+    let done = 0
+    let fail = 0
+    for (const id of selectedIds) {
+      try {
+        const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' })
+        const result = await res.json()
+        if (result.code === 200) done++
+        else fail++
+      } catch {
+        fail++
+      }
+      await new Promise((r) => setTimeout(r, 80))
+    }
+    setSelectedIds(new Set())
+    loadUsers()
+    alert(`批量删除完成：成功 ${done} 条${fail > 0 ? `，失败 ${fail} 条` : ''}`)
   }
 
   const handleSave = async () => {
@@ -422,6 +479,23 @@ export default function UsersPage() {
           >
             导入
           </button>
+          {selectedIds.size > 0 && (
+            <button
+              onClick={handleBulkDelete}
+              style={{
+                padding: '8px 16px',
+                background: '#dc2626',
+                border: '1px solid #b91c1c',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                color: '#ffffff',
+                fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif',
+                fontWeight: 'bold'
+              }}
+            >
+              批量删除（{selectedIds.size}）
+            </button>
+          )}
           <button
             onClick={() => {
               // 创建CSV模板内容
@@ -567,41 +641,64 @@ export default function UsersPage() {
           <thead>
             <tr style={{ background: '#3d3d3d', borderBottom: '1px solid #404040' }}>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>
-                <input type="checkbox" />
+                <input
+                  ref={headerCheckRef}
+                  type="checkbox"
+                  checked={pageIds.length > 0 ? allPageSelected : false}
+                  onChange={handleToggleAll}
+                  title="全选本页"
+                />
               </th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>编号 ↕</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', minWidth: '80px' }}>姓名 ↕</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>性别 ↕</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>手机号 ↕</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>身份证号 ↕</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>银行卡号 ↕</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>金额 ↕</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>放款时间 ↕</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>到期时间 ↕</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>借款期数 ↕</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>贷款期数 ↕</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>逾期天数 ↕</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>逾期金额 ↕</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>违约金 ↕</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>利息 ↕</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>应还金额 ↕</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>分期期数 ↕</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>放款编号 ↕</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>添加时间 ↕</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>修改时间 ↕</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>操作</th>
+              {[
+                { label: '编号', icon: '/resources/images/编号.svg' },
+                { label: '姓名', icon: '/resources/images/姓名.svg', minWidth: '80px' },
+                { label: '性别', icon: '/resources/images/性别.svg' },
+                { label: '手机号', icon: '/resources/images/手机号码.svg' },
+                { label: '身份证号', icon: '/resources/images/身份证.svg' },
+                { label: '银行卡号', icon: '/resources/images/银行卡.svg' },
+                { label: '金额', icon: '/resources/images/金额.svg' },
+                { label: '放款时间', icon: '/resources/images/放款时间.svg' },
+                { label: '到期时间', icon: '/resources/images/放款时间.svg' },
+                { label: '贷款期数', icon: '/resources/images/放款时间.svg' },
+                { label: '逾期天数', icon: '/resources/images/放款时间.svg' },
+                { label: '逾期金额', icon: '/resources/images/金额.svg' },
+                { label: '违约金', icon: '/resources/images/金额.svg' },
+                { label: '利息', icon: '/resources/images/金额.svg' },
+                { label: '应还金额', icon: '/resources/images/金额.svg' },
+                { label: '放款编号', icon: '/resources/images/编号.svg' },
+                { label: '添加时间', icon: '/resources/images/放款时间.svg' },
+                { label: '修改时间', icon: '/resources/images/放款时间.svg' },
+                { label: '操作', icon: null },
+              ].map(({ label, icon, minWidth }) => (
+                <th
+                  key={label}
+                  style={{
+                    padding: '12px',
+                    textAlign: 'left',
+                    fontWeight: 'bold',
+                    color: '#ffffff',
+                    fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif',
+                    ...(minWidth ? { minWidth } : {}),
+                  }}
+                >
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    {icon ? <img src={icon} alt="" style={{ width: 18, height: 18, flexShrink: 0 }} /> : null}
+                    {label}
+                  </span>
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={22} style={{ padding: '40px', textAlign: 'center', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>
+                <td colSpan={20} style={{ padding: '40px', textAlign: 'center', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>
                   加载中...
                 </td>
               </tr>
             ) : users.length === 0 ? (
               <tr>
-                <td colSpan={22} style={{ padding: '40px', textAlign: 'center', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>
+                <td colSpan={20} style={{ padding: '40px', textAlign: 'center', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>
                   暂无数据
                 </td>
               </tr>
@@ -609,7 +706,11 @@ export default function UsersPage() {
               users.map((user) => (
                 <tr key={user.id} style={{ borderBottom: '1px solid #404040' }}>
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>
-                    <input type="checkbox" />
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(user.id)}
+                      onChange={() => handleToggleOne(user.id)}
+                    />
                   </td>
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{user.id}</td>
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold', whiteSpace: 'normal', wordBreak: 'break-all' }} title={user.name || ''}>{user.name || '-'}</td>
@@ -620,14 +721,12 @@ export default function UsersPage() {
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{formatAmount(user.amount)}</td>
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{user.loan_date || '-'}</td>
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{user.due_date || '-'}</td>
-                  <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{user.repayment_months ?? '-'}</td>
-                  <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{user.loan_term ?? user.repayment_months ?? '-'}</td>
+                  <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{user.loan_term ?? '-'}</td>
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{user.overdue_days ?? '-'}</td>
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{formatAmount(user.overdue_amount)}</td>
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{formatAmount(user.penalty_fee)}</td>
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{formatAmount(user.interest)}</td>
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{formatAmount(user.amount_due)}</td>
-                  <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{user.repayment_months ?? '-'}</td>
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{user.loan_number || '-'}</td>
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{formatDate(user.created_at)}</td>
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{formatDate(user.updated_at)}</td>

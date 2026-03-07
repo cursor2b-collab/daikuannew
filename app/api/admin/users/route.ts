@@ -84,6 +84,11 @@ export async function POST(request: NextRequest) {
       repayment_months, penalty_fee, interest, gender, loan_term
     } = body
 
+    // 只写入数据库实际存在的列（表中无 repayment_months，用 loan_term 存借款期数）
+    const loanTermValue = loan_term !== undefined && loan_term !== '' && loan_term != null
+      ? parseInt(loan_term)
+      : (repayment_months != null && repayment_months !== '' ? parseInt(repayment_months) : null)
+
     const basePayload: Record<string, unknown> = {
       name,
       phone,
@@ -93,12 +98,11 @@ export async function POST(request: NextRequest) {
       amount: amount ? parseFloat(amount) : 0,
       loan_date: loan_date || null,
       overdue_days: overdue_days ? parseInt(overdue_days) : 0,
-      overdue_amount: overdue_amount ? parseFloat(overdue_amount) : 0,
-      amount_due: amount_due ? parseFloat(amount_due) : 0,
+      overdue_amount: overdue_amount != null && overdue_amount !== '' ? parseFloat(overdue_amount) : null,
+      amount_due: amount_due != null && amount_due !== '' ? parseFloat(amount_due) : null,
       is_settled: is_settled || false,
       is_interest_free: is_interest_free || false,
       payment_method: payment_method || null,
-      repayment_months: repayment_months != null && repayment_months !== '' ? parseInt(repayment_months) : null,
       updated_at: new Date().toISOString()
     }
     const payloadWithOptional = { ...basePayload }
@@ -106,28 +110,9 @@ export async function POST(request: NextRequest) {
     if (penalty_fee !== undefined && penalty_fee !== '') payloadWithOptional.penalty_fee = parseFloat(penalty_fee)
     if (interest !== undefined && interest !== '') payloadWithOptional.interest = parseFloat(interest)
     if (gender !== undefined && gender !== '') payloadWithOptional.gender = gender
-    if (loan_term !== undefined && loan_term !== '' && loan_term != null) payloadWithOptional.loan_term = parseInt(loan_term)
+    if (loanTermValue != null && !Number.isNaN(loanTermValue)) payloadWithOptional.loan_term = loanTermValue
 
-    let result = await supabase.from('users').insert(payloadWithOptional).select().single()
-    if (result.error && /column.*does not exist|undefined_column/i.test(String(result.error.message))) {
-      const fallbackPayload: Record<string, unknown> = {
-        name,
-        phone,
-        id_number,
-        loan_number,
-        bank_card,
-        amount: amount ? parseFloat(amount) : 0,
-        loan_date: loan_date || null,
-        overdue_days: overdue_days ? parseInt(overdue_days) : 0,
-        overdue_amount: overdue_amount ? parseFloat(overdue_amount) : 0,
-        amount_due: amount_due ? parseFloat(amount_due) : 0,
-        is_settled: is_settled || false,
-        is_interest_free: is_interest_free || false,
-        payment_method: payment_method || null,
-        updated_at: new Date().toISOString()
-      }
-      result = await supabase.from('users').insert(fallbackPayload).select().single()
-    }
+    const result = await supabase.from('users').insert(payloadWithOptional).select().single()
     const { data, error } = result
 
     if (error) {

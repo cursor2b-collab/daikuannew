@@ -24,8 +24,8 @@ function loadEnv() {
 
 loadEnv()
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://zjodvwgmwwgixwpyuvos.supabase.co'
-const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY || 'sb_publishable_Fy16nfH8omr46sGvBzisEg_wq3UWtuc'
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qojbcfijkinlfymvfvwx.supabase.co'
+const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY || 'sb_publishable_Tx2CV4iQyhDBp8qTJPUNNw_OWlu7tvq'
 
 const supabase = createClient(url, key)
 

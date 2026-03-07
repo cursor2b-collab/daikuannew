@@ -18,6 +18,7 @@ const COPY_KEYS_INDEX = [
   'copy_max_amount',
   'copy_payment_method',
   'copy_process_method',
+  'copy_cooperation_title',
   'copy_step1_text',
   'copy_step2_text',
   'copy_step3_text',
@@ -167,6 +168,7 @@ export async function GET(request: NextRequest) {
       if (copy.copy_step1_text !== undefined && copy.copy_step1_text !== null) data = { ...data, step1_text: String(copy.copy_step1_text) }
       if (copy.copy_step2_text !== undefined && copy.copy_step2_text !== null) data = { ...data, step2_text: String(copy.copy_step2_text) }
       if (copy.copy_step3_text !== undefined && copy.copy_step3_text !== null) data = { ...data, step3_text: String(copy.copy_step3_text) }
+      if (copy.copy_cooperation_title !== undefined && copy.copy_cooperation_title !== null) data = { ...data, cooperation_title: String(copy.copy_cooperation_title) }
       if (copy.copy_marquee_messages !== undefined && copy.copy_marquee_messages !== null) {
         try {
           const arr = JSON.parse(String(copy.copy_marquee_messages))

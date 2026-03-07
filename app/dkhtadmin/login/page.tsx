@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import styled from 'styled-components'
+import { GLSLHills } from '@/components/ui/glsl-hills'
 
 export default function AdminLoginPage() {
   const router = useRouter()
@@ -60,8 +61,10 @@ export default function AdminLoginPage() {
 
   return (
     <StyledWrapper>
-      <div className="admin-bg" style={{ position: 'relative', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <aside className="inner"></aside>
+      <div className="admin-bg" style={{ position: 'relative', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
+          <GLSLHills width="100%" height="100%" cameraZ={125} planeSize={256} speed={0.5} />
+        </div>
         <div id="form-ui" style={{ position: 'relative', zIndex: 10000 }}>
           <form action="#" method="post" id="form" onSubmit={handleSubmit}>
             <div id="form-body">
@@ -114,6 +117,14 @@ export default function AdminLoginPage() {
 }
 
 const StyledWrapper = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #000;
+  min-height: 100vh;
+
   #form-ui {
     position: relative;
     z-index: 10000;
@@ -125,12 +136,29 @@ const StyledWrapper = styled.div`
     width: 350px;
     height: 399px;
     padding: 25px;
-    background-color: #161616;
-    box-shadow: 0px 15px 60px #00FF7F;
-    outline: 1px solid #2b9962;
-    border-radius: 30px;
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      0 0 0 1px rgba(255, 255, 255, 0.05);
+    border-radius: 28px;
     position: relative;
     z-index: 10000;
+    overflow: hidden;
+  }
+
+  #form::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    pointer-events: none;
   }
 
   #form-body {
@@ -165,16 +193,20 @@ const StyledWrapper = styled.div`
 
   .form-inp {
     padding: 11px 25px;
-    background: transparent;
-    border: 1px solid #e3e3e3;
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     line-height: 1;
-    border-radius: 8px;
+    border-radius: 12px;
     position: relative;
     z-index: 10001;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
   }
 
   .form-inp:focus-within {
-    border: 1px solid #00FF7F;
+    border-color: rgba(0, 255, 127, 0.5);
+    box-shadow: 0 0 0 1px rgba(0, 255, 127, 0.2), 0 0 20px rgba(0, 255, 127, 0.08);
   }
 
   .form-inp:first-child {
@@ -194,7 +226,7 @@ const StyledWrapper = styled.div`
   }
 
   .form-inp input::placeholder {
-    color: #868686;
+    color: rgba(255, 255, 255, 0.4);
   }
 
   .form-inp input:focus {
@@ -210,26 +242,30 @@ const StyledWrapper = styled.div`
   #submit-button {
     display: block;
     width: 100%;
-    color: #00FF7F;
-    background-color: transparent;
+    color: rgba(0, 255, 127, 0.95);
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     font-weight: 600;
     font-size: 14px;
     margin: 0;
     padding: 14px 13px 12px 13px;
-    border: 0;
-    outline: 1px solid #00FF7F;
-    border-radius: 8px;
+    border: 1px solid rgba(0, 255, 127, 0.35);
+    outline: none;
+    border-radius: 12px;
     line-height: 1;
     cursor: pointer;
-    transition: all ease-in-out .3s;
+    transition: all 0.25s ease;
     position: relative;
     z-index: 10002;
+    box-shadow: 0 0 20px rgba(0, 255, 127, 0.05);
   }
 
   #submit-button:hover:not(:disabled) {
-    transition: all ease-in-out .3s;
-    background-color: #00FF7F;
-    color: #161616;
+    background: rgba(0, 255, 127, 0.15);
+    border-color: rgba(0, 255, 127, 0.6);
+    color: #00FF7F;
+    box-shadow: 0 0 28px rgba(0, 255, 127, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
     cursor: pointer;
   }
 

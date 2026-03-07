@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { RefreshIcon, FullscreenIcon, UserIcon } from '@/components/Icons'
+import AdminLoader from '@/components/AdminLoader'
 
 export default function AdminLayout({
   children,
@@ -143,7 +144,7 @@ export default function AdminLayout({
     return <>{children}</>
   }
 
-  // 如果还在加载中，显示加载提示
+  // 如果还在加载中，显示加载动画
   if (loading || !adminInfo) {
     return (
       <div style={{
@@ -154,7 +155,7 @@ export default function AdminLayout({
         background: '#1a1a1a',
         color: '#fff'
       }}>
-        <div>加载中...</div>
+        <AdminLoader />
       </div>
     )
   }

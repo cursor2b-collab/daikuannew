@@ -23,7 +23,7 @@
 系统使用 Supabase 作为数据库，配置信息：
 
 ```
-NEXT_PUBLIC_SUPABASE_URL=https://zjodvwgmwwgixwpyuvos.supabase.co
+NEXT_PUBLIC_SUPABASE_URL=https://qojbcfijkinlfymvfvwx.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=sb_publishable_Fy16nfH8omr46sGvBzisEg_wq3UWtuc
 ```
 
@@ -144,7 +144,7 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=sb_publishable_Fy16nfH8omr46sGvBzis
 2. **配置环境变量**
    复制 `.env.example` 为 `.env.local`，并填写：
    ```
-   NEXT_PUBLIC_SUPABASE_URL=https://zjodvwgmwwgixwpyuvos.supabase.co
+   NEXT_PUBLIC_SUPABASE_URL=https://qojbcfijkinlfymvfvwx.supabase.co
    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=sb_publishable_Fy16nfH8omr46sGvBzisEg_wq3UWtuc
    ```
    如需用户登录时向 Telegram 群组发通知，可额外配置（也可在管理后台「系统设置 → Telegram 通知」中填写）：

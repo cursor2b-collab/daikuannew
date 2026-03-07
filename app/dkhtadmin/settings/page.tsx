@@ -43,6 +43,7 @@ export default function SettingsPage() {
   const [copyStep1Text, setCopyStep1Text] = useState('3分钟申请额度')
   const [copyStep2Text, setCopyStep2Text] = useState('30秒最快审批')
   const [copyStep3Text, setCopyStep3Text] = useState('1分钟最快放款')
+  const [copyCooperationTitle, setCopyCooperationTitle] = useState('合作机构')
 
   useEffect(() => {
     loadSettings()
@@ -121,7 +122,7 @@ export default function SettingsPage() {
         setSmsContentTemplate(String(smsTemplateJson.data.setting_value))
       }
 
-      const copyKeys = ['site_name', 'copy_index_page_title', 'copy_index_subtitle', 'copy_hero_product_name', 'copy_hero_quota_label', 'copy_hero_amount', 'copy_hero_rate', 'copy_hero_tip', 'copy_marquee_messages', 'copy_product_title', 'copy_rate_info', 'copy_max_amount', 'copy_payment_method', 'copy_process_method', 'copy_step1_text', 'copy_step2_text', 'copy_step3_text']
+      const copyKeys = ['site_name', 'copy_index_page_title', 'copy_index_subtitle', 'copy_hero_product_name', 'copy_hero_quota_label', 'copy_hero_amount', 'copy_hero_rate', 'copy_hero_tip', 'copy_marquee_messages', 'copy_product_title', 'copy_rate_info', 'copy_max_amount', 'copy_payment_method', 'copy_process_method', 'copy_cooperation_title', 'copy_step1_text', 'copy_step2_text', 'copy_step3_text']
       const copyRes = await Promise.all(copyKeys.map(k => fetch(`/api/admin/settings?key=${k}`)))
       const copyJsons = await Promise.all(copyRes.map(r => r.json()))
       copyKeys.forEach((k, i) => {
@@ -149,6 +150,7 @@ export default function SettingsPage() {
         else if (k === 'copy_max_amount') setCopyMaxAmount(s)
         else if (k === 'copy_payment_method') setCopyPaymentMethod(s)
         else if (k === 'copy_process_method') setCopyProcessMethod(s)
+        else if (k === 'copy_cooperation_title') setCopyCooperationTitle(s)
         else if (k === 'copy_step1_text') setCopyStep1Text(s)
         else if (k === 'copy_step2_text') setCopyStep2Text(s)
         else if (k === 'copy_step3_text') setCopyStep3Text(s)
@@ -243,6 +245,7 @@ export default function SettingsPage() {
           ['copy_max_amount', copyMaxAmount],
           ['copy_payment_method', copyPaymentMethod],
           ['copy_process_method', copyProcessMethod],
+          ['copy_cooperation_title', copyCooperationTitle],
           ['copy_step1_text', copyStep1Text],
           ['copy_step2_text', copyStep2Text],
           ['copy_step3_text', copyStep3Text],
@@ -749,6 +752,7 @@ export default function SettingsPage() {
                 { label: '最高额度', value: copyMaxAmount, set: setCopyMaxAmount, placeholder: '最高可申请200,000元' },
                 { label: '计费方式', value: copyPaymentMethod, set: setCopyPaymentMethod, placeholder: '等额本息、等额本金、本息同还' },
                 { label: '处理方式', value: copyProcessMethod, set: setCopyProcessMethod, placeholder: '快1分钟，详情至本人银行卡' },
+                { label: '合作机构标题', value: copyCooperationTitle, set: setCopyCooperationTitle, placeholder: '合作机构' },
                 { label: '步骤1文案', value: copyStep1Text, set: setCopyStep1Text, placeholder: '3分钟申请额度' },
                 { label: '步骤2文案', value: copyStep2Text, set: setCopyStep2Text, placeholder: '30秒最快审批' },
                 { label: '步骤3文案', value: copyStep3Text, set: setCopyStep3Text, placeholder: '1分钟最快放款' },

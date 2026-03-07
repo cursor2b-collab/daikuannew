@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 import { createHash } from 'crypto'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://zjodvwgmwwgixwpyuvos.supabase.co'
-const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY || 'sb_publishable_Fy16nfH8omr46sGvBzisEg_wq3UWtuc'
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://hywtoijblgfgivmwicmj.supabase.co'
+const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh5d3RvaWpibGdmZ2l2bXdpY21qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4NzQ2NzQsImV4cCI6MjA4ODQ1MDY3NH0.UOtmslmjDzXFgIU_n5zlCihf0tjRxUPME1sq35hDcmQ'
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 // 服务端使用的 Supabase 客户端。生产环境务必配置 SUPABASE_SERVICE_ROLE_KEY，否则 RLS 会拦截写表导致 500。

@@ -35,6 +35,19 @@ body.admin-page {
   color: #ffffff !important;
 }
 
+/* 管理后台表格内表头、单元格文字强制白色（操作列链接保留各自颜色） */
+.admin-bg table th,
+.admin-bg table td {
+  color: #ffffff !important;
+}
+.admin-bg table th span,
+.admin-bg table td span {
+  color: #ffffff !important;
+}
+.admin-bg table input[type="checkbox"] {
+  accent-color: #667eea;
+}
+
 :root {
   --font-size: 16px;
   --text-2xl: 1.5rem; /* 24px */

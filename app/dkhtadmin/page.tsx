@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import AdminLoader from '@/components/AdminLoader'
 
 const S = {
   card: { background: '#2d2d2d', borderRadius: 8, padding: '24px 28px', border: '1px solid #404040' } as React.CSSProperties,
@@ -37,7 +38,9 @@ export default function DashboardPage() {
       </div>
 
       {loading ? (
-        <div style={{ color: '#999', textAlign: 'center', padding: 60 }}>加载中...</div>
+        <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
+          <AdminLoader />
+        </div>
       ) : (
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(180px,1fr))', gap: 16, marginBottom: 28 }}>
