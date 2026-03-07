@@ -150,7 +150,7 @@ export default function UsersPage() {
     if (!confirm(`确定要删除已选中的 ${selectedIds.size} 条记录吗？此操作不可恢复。`)) return
     let done = 0
     let fail = 0
-    for (const id of selectedIds) {
+    for (const id of Array.from(selectedIds)) {
       try {
         const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' })
         const result = await res.json()
