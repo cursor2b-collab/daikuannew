@@ -277,9 +277,9 @@ export default function UsersPage() {
                       dataRows = rows.slice(1).map((values: (string | number)[]) => {
                         const row: any = {}
                         headers.forEach((h, i) => {
-                          const v = values[i]
-                          let s = typeof v === 'number' ? (v as number).toString() : String(v ?? '')
-                          if (v instanceof Date) s = (v as Date).toISOString().slice(0, 19).replace('T', ' ')
+                          const v = values[i] as unknown
+                          let s = typeof v === 'number' ? String(v) : String(v ?? '')
+                          if (v instanceof Date) s = v.toISOString().slice(0, 19).replace('T', ' ')
                           row[h] = stripQuotes(s.trim())
                         })
                         return { row }
